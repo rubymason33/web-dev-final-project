@@ -1,0 +1,12 @@
+- "modules" page but for quizzes
+- ruby transfer over kambaz
+- quizzes folder at same level as assignments...
+  - index.tsx (quizzes home screen. modules page)
+  - quiz details screen (new preview thing, when u click from "home")
+  - editor (can get to from preivew, same as assignment editor), this is the details pill tab
+  - tab for questions (at same page as editor)
+  - components for the differnt types (True/false question, Multiple choice question, Fill in a blank question) can import to the questions page
+
+
+- prototyping by June 1st
+- 
