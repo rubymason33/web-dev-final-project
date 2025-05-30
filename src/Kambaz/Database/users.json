@@ -1,0 +1,202 @@
+[
+    {
+        "_id": "123",
+        "username": "iron_man",
+        "password": "stark123",
+        "firstName": "Tony",
+        "lastName": "Stark",
+        "email": "tony@stark.com",
+        "dob": "1970-05-29",
+        "loginId": "001234561S"
+    },
+    {
+        "_id": "234",
+        "username": "dark_knight",
+        "password": "wayne123",
+        "firstName": "Bruce",
+        "lastName": "Wayne",
+        "email": "bruce@wayne.com",
+        "dob": "1972-02-19",
+        "loginId": "001234562S"
+    },
+    {
+        "_id": "345",
+        "username": "black_widow",
+        "password": "romanoff123",
+        "firstName": "Natasha",
+        "lastName": "Romanoff",
+        "email": "natasha@avengers.com",
+        "dob": "1984-11-22",
+        "loginId": "001234564S"
+    },
+    {
+        "_id": "456",
+        "username": "thor_odinson",
+        "password": "mjolnir123",
+        "firstName": "Thor",
+        "lastName": "Odinson",
+        "email": "thor@asgard.com",
+        "dob": "1982-05-25",
+        "loginId": "001234565S"
+    },
+    {
+        "_id": "567",
+        "username": "hulk_smash",
+        "password": "banner123",
+        "firstName": "Bruce",
+        "lastName": "Banner",
+        "email": "bruce@avengers.com",
+        "dob": "1969-12-18",
+        "loginId": "001234566S"
+    },
+    {
+        "_id": "678",
+        "username": "ring_bearer",
+        "password": "shire123",
+        "firstName": "Frodo",
+        "lastName": "Baggins",
+        "email": "frodo@shire.com",
+        "dob": "1368-09-22",
+        "loginId": "001234567S"
+    },
+    {
+        "_id": "789",
+        "username": "strider",
+        "password": "aragorn123",
+        "firstName": "Aragorn",
+        "lastName": "Elessar",
+        "email": "aragorn@gondor.com",
+        "dob": "2931-03-01",
+        "loginId": "001234568S"
+    },
+    {
+        "_id": "890",
+        "username": "elf_archer",
+        "password": "legolas123",
+        "firstName": "Legolas",
+        "lastName": "Greenleaf",
+        "email": "legolas@mirkwood.com",
+        "dob": "2879-07-15",
+        "loginId": "001234569S"
+    },
+    {
+        "_id": "777",
+        "username": "ada",
+        "password": "123",
+        "firstName": "Ada",
+        "lastName": "Lovelace",
+        "email": "ada@lovelace.com",
+        "dob": "1815-12-15",
+        "loginId": "002143650S"
+    },
+    {
+        "_id": "900",
+        "username": "grace_hopper",
+        "password": "test123",
+        "firstName": "Grace",
+        "lastName": "Hopper",
+        "email": "hopper@navy.mil",
+        "dob": "1906-12-09",
+        "loginId": "00974329472S"
+    },
+    {
+        "_id": "901",
+        "username": "alan_turing",
+        "password": "test123",
+        "firstName": "Alan",
+        "lastName": "Turing",
+        "email": "turing@bletchley.uk",
+        "dob": "1912-06-23",
+        "loginId": "002345678S"
+    },
+    {
+        "_id": "902",
+        "username": "marie_curie",
+        "password": "test123",
+        "firstName": "Marie",
+        "lastName": "Curie",
+        "email": "marie@radio.fr",
+        "dob": "1867-11-07",
+        "loginId": "002345672S"
+    },
+    {
+        "_id": "903",
+        "username": "nikola_tesla",
+        "password": "test123",
+        "firstName": "Nikola",
+        "lastName": "Tesla",
+        "email": "tesla@ac.com",
+        "dob": "1856-07-10",
+        "loginId": "0023456784S"
+    },
+    {
+        "_id": "904",
+        "username": "katherine_johnson",
+        "password": "test123",
+        "firstName": "Katherine",
+        "lastName": "Johnson",
+        "email": "kjohnson@nasa.gov",
+        "dob": "1918-08-26",
+        "loginId": "002453675S"
+    },
+    {
+        "_id": "905",
+        "username": "tim_berners-lee",
+        "password": "test123",
+        "firstName": "Tim",
+        "lastName": "Berners-Lee",
+        "email": "tim@web.org",
+        "dob": "1955-06-08",
+        "loginId": "008592485S"
+    },
+    {
+        "_id": "906",
+        "username": "ruby_mason",
+        "password": "test123",
+        "firstName": "Ruby",
+        "lastName": "Mason",
+        "email": "ruby@neu.org",
+        "dob": "2004-05-19",
+        "loginId": "002919978S"
+    },
+    {
+        "_id": "907",
+        "username": "krish_g",
+        "password": "test123",
+        "firstName": "Krish",
+        "lastName": "Gupta",
+        "email": "krish@neu.org",
+        "dob": "2004-11-30",
+        "loginId": "00264839S"
+    },
+    {
+        "_id": "908",
+        "username": "erin_k",
+        "password": "test123",
+        "firstName": "Erin",
+        "lastName": "Kamm",
+        "email": "erin@tem.org",
+        "dob": "2005-01-25",
+        "loginId": "002746539S"
+    },
+    {
+        "_id": "909",
+        "username": "etta_ma",
+        "password": "test123",
+        "firstName": "Etta",
+        "lastName": "Mason",
+        "email": "etta@jrhs.org",
+        "dob": "2008-04-18",
+        "loginId": "002436850S"
+    },
+    {
+        "_id": "403",
+        "username": "neel_g",
+        "password": "test123",
+        "firstName": "Neel",
+        "lastName": "Gupta",
+        "email": "neel@neu.org",
+        "dob": "2006-02-18",
+        "loginId": "00428923489S"
+    }
+]
