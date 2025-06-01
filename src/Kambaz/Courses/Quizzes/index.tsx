@@ -63,7 +63,7 @@ export default function Quizzes() {
                                                 <span className="text-muted fw-bold">{quiz.status}</span>
                                                 <span className="text-muted fw-bold"> | Due </span>
                                                 <span className="text-muted">
-                                                    {new Date(quiz.due).toLocaleString("en-US", {
+                                                    {new Date(quiz.dueDate).toLocaleString("en-US", {
                                                     month: "long",
                                                     day: "numeric",
                                                     hour: "numeric",
@@ -79,7 +79,7 @@ export default function Quizzes() {
                                                 <span className="text-muted fw-bold">{quiz.status}</span>
                                                 <span className="text-muted fw-bold"> | Due </span>
                                                 <span className="text-muted">
-                                                    {new Date(quiz.due).toLocaleString("en-US", {
+                                                    {new Date(quiz.dueDate).toLocaleString("en-US", {
                                                     month: "long",
                                                     day: "numeric",
                                                     hour: "numeric",
@@ -105,7 +105,7 @@ export default function Quizzes() {
                                                 </span>
                                                 <span className="text-muted fw-bold"> | Due </span>
                                                 <span className="text-muted">
-                                                    {new Date(quiz.due).toLocaleString("en-US", {
+                                                    {new Date(quiz.dueDate).toLocaleString("en-US", {
                                                     month: "long",
                                                     day: "numeric",
                                                     hour: "numeric",

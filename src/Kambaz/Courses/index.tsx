@@ -8,7 +8,7 @@ import { Navigate, Route, Routes, useLocation, useParams } from "react-router";
 import { FaAlignJustify } from "react-icons/fa";
 import PeopleTable from "./People/Table";
 import Quizzes from "./Quizzes";
-import QuizHome from "./Quizzes/QuizHome";
+import QuizDetails from "./Quizzes/QuizDetails";
 
 export default function Courses() {
     const { cid } = useParams();
@@ -35,7 +35,7 @@ export default function Courses() {
                         <Route path="Piazza" element={<h2>Piazza</h2>} />
                         <Route path="Zoom" element={<h2>Zoom</h2>} />
                         <Route path="Quizzes" element={<h2><Quizzes /></h2>} />
-                        <Route path="Quizzes/:qid" element={<h2><QuizHome /></h2>} />
+                        <Route path="Quizzes/:qid" element={<h2><QuizDetails /></h2>} />
                         <Route path="Grades" element={<h2>Grades</h2>} />
                         <Route path="People" element={<PeopleTable />} />
                     </Routes>
