@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
 import { AiOutlineDashboard } from "react-icons/ai";
-import { GoGear } from "react-icons/go";
 import { LiaBookSolid } from "react-icons/lia";
 import { FaRegCircleUser } from "react-icons/fa6";
 import { ListGroup } from "react-bootstrap";
