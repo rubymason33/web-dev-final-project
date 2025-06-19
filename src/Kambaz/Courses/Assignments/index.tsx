@@ -7,19 +7,75 @@ import LessonControlButtons from "../Modules/LessonControlButtons";
 import AssignmentControlButtons from "./AssignmentControlButtons";
 import { MdOutlineAssignment } from "react-icons/md";
 import { useParams, Link } from "react-router-dom";
-import * as db from "../../Database";
+import { useDispatch, useSelector } from "react-redux";
+import { FaTrash } from "react-icons/fa";
+import DeleteConfirmation from "./DeleteConfirmation";
+import { deleteAssignment as deleteAssignmentAction, setAssignments } from "./reducer";
+import { useEffect, useState } from "react";
+import * as assignmentsClient from "./client";
 
 
 export default function Assignments() {
     const { cid } = useParams();
-    const assignments = db.assignments.filter((a: any) => a.course === cid);
+    const dispatch = useDispatch();
+    const assignments = useSelector((state: any) =>
+        state.assignmentsReducer.assignments.filter((a: any) => a.course === cid)
+    );
+
+    const { currentUser } = useSelector((state: any) => state.accountReducer);
+    const isFaculty = currentUser?.role === "FACULTY";
+
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [assignmentToDelete, setAssignmentToDelete] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchAssignments = async () => {
+            if (!cid) return;
+            try {
+                const fetchedAssignments = await assignmentsClient.findAssignmentsForCourse(cid);
+                dispatch(setAssignments(fetchedAssignments));
+            } catch (error) {
+                console.error("Failed to fetch assignments:", error);
+            }
+        };
+        fetchAssignments();
+    }, [cid, dispatch]);
+
+    const handleDeleteClick = (assignment: any) => {
+        setAssignmentToDelete(assignment);
+        setShowDeleteModal(true);
+    };
+    const handleConfirmDelete = async () => {
+        if (assignmentToDelete) {
+            try {
+                await assignmentsClient.deleteAssignment(assignmentToDelete._id);
+                dispatch(deleteAssignmentAction(assignmentToDelete._id));
+            } catch (error) {
+                console.error("Failed to delete assignment:", error);
+            }
+        }
+        setShowDeleteModal(false);
+        setAssignmentToDelete(null);
+    };
+
+    const handleCancelDelete = () => {
+        setShowDeleteModal(false);
+        setAssignmentToDelete(null);
+    };
 
     return (
         <div>
             <div id="wd-assignment-header" className="mb-5">
-                <Button className="me-2 float-end" size="lg" variant="danger">
-                    <FaPlus /> Assignment
-                </Button>
+                {/* only faculty types */}
+                {isFaculty && (
+                    <Link 
+                        to={`/Kambaz/Courses/${cid}/Assignments/New`} 
+                        className="btn btn-danger me-2 float-end btn-lg"
+                    >
+                        <FaPlus /> Assignment
+                    </Link>
+                )}
+
                 <Button className="me-2 float-end" size="lg" variant="secondary">
                     <FaPlus /> Group
                 </Button>
@@ -60,7 +116,7 @@ export default function Assignments() {
                                             <Link
                                                 to={`/Kambaz/Courses/${cid}/Assignments/${assignment._id}`}
                                                 className="wd-assignment-link">
-                                                {assignment.title}
+                                                {assignment.title || assignment.name || "Untitled"}
                                             </Link>
                                         </div>
 
@@ -92,15 +148,29 @@ export default function Assignments() {
 
                                     {/* lesson control */}
                                     <div className="d-flex align-items-center ms-3">
-                                    <LessonControlButtons />
+                                        {isFaculty && (
+                                            <div
+                                                className="d-flex align-items-center me-2"
+                                                style={{ cursor: "pointer" }}
+                                                onClick={() => handleDeleteClick(assignment)}
+                                            >
+                                                <FaTrash className="text-danger fs-5" />
+                                            </div>
+                                        )}
+                                        <LessonControlButtons />
                                     </div>
                                 </ListGroup.Item>
                             ))}
                         </ListGroup>
                     </ListGroup.Item>
                 </ListGroup>
-                    
             </div>
+            <DeleteConfirmation
+                show={showDeleteModal}
+                title={assignmentToDelete?.title}
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCancelDelete}
+            />
         </div>
     );
 }
