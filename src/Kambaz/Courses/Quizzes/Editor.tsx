@@ -4,13 +4,9 @@ import * as db from "../../Database";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect } from "react";
 import * as quizzesClient from "./client";
-import { FaItalic } from "react-icons/fa";
-import { FaUnderline } from "react-icons/fa";
-import { AiOutlineFontColors } from "react-icons/ai";
-import { FaHighlighter } from "react-icons/fa6";
-import { HiDotsVertical } from "react-icons/hi";
-import { FaChevronDown } from "react-icons/fa";
 import {addQuiz, updateQuiz} from "./reducer"
+import QuestionEditor from "./Questions/QuestionEditor";
+import EditingMenu from "./EditingMenu";
 
 
 
@@ -155,27 +151,7 @@ export default function QuizEditor() {
                 <Form.Group className="mb-5" id="wd-instructions">
                     <Form.Label className="fw-bold">Quiz Instructions</Form.Label>
                     <br></br>
-                    <div className="ms-4" style={{ fontSize: "1rem" }}>
-                        <div className="d-flex gap-3">
-                            <span>Edit</span> 
-                            <span>View</span>
-                            <span>Insert</span>
-                            <span>Format</span>
-                            <span>Tools</span>
-                            <span>Table</span>
-                        </div> <br/>
-                        <div className="d-flex gap-5">
-                            <h6>12pt<FaChevronDown/></h6> 
-                            <h6>Paragraph<FaChevronDown/></h6> |
-                            <h6 className="fw-bold">B</h6>
-                            <FaItalic />
-                            <FaUnderline />
-                            <AiOutlineFontColors />
-                            <FaHighlighter /> | 
-                            <HiDotsVertical />
-
-                        </div>
-                    </div>
+                    <EditingMenu />
                     <Form.Control as="textarea" rows={5} placeholder="Description" defaultValue={formData.instructions} />
                 </Form.Group>
             
@@ -369,7 +345,7 @@ export default function QuizEditor() {
             </Tab>
             <Tab eventKey="questions" title="Questions" >
                 {/* Questions content */}
-                <div>List of quiz Questions</div>
+                <QuestionEditor quizId={qid} />
             </Tab>
         </Tabs>
         </>
