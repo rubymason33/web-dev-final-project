@@ -5,22 +5,46 @@ import { IoEllipsisVertical } from "react-icons/io5";
 import { RiArrowDownSFill } from "react-icons/ri";
 import { Link, useParams } from "react-router";
 import { HiOutlineRocketLaunch } from "react-icons/hi2";
-import LessonControlButtons from "../Modules/LessonControlButtons";
 import * as db from "../../Database";
 import "./styles.css"
+import { useDispatch, useSelector } from "react-redux";
+import * as quizzesClient from "./client"
+import { FaTrash } from "react-icons/fa";
+import GreenCheckmark from "./GreenCheckmark";
+import {deleteQuiz} from "./reducer"
 
 export default function Quizzes() {
     const { cid } = useParams();
     const quizzes = db.quizzes.filter((q: any) => q.course === cid);
+    const { currentUser } = useSelector((state: any) => state.accountReducer);
+    const isFaculty = currentUser?.role === "FACULTY";
+
+    const dispatch = useDispatch();
+    const handleDelete = async (quizId: any) => {
+        console.log(`deleteing quiz with id ${quizId}`)
+        try {
+            await quizzesClient.deleteQuiz(quizId);
+            dispatch(deleteQuiz(quizId));
+        } catch (error) {
+            console.error("Failed to delete assignment:", error);
+        }
+    };
+
     return (
         <div>
             <div id="wd-quiz-header" className="mb-5">
                 <Button className="me-2 float-end border border-dark" size="lg" variant="secondary">
                     <IoEllipsisVertical /> 
                 </Button>
-                <Button className="me-2 float-end border border-dark" size="lg" variant="danger">
-                    <FaPlus /> Quiz
-                </Button>
+                {isFaculty && (
+                    <Link 
+                        to={`/Kambaz/Courses/${cid}/Quizzes/New/edit`} 
+                        className="btn btn-danger me-2 float-end btn-lg"
+                    >
+                        <FaPlus /> Quiz
+                    </Link>
+                )}
+                
                 <InputGroup style={{ maxWidth: "300px" }} className="me-1 justify-left" size="lg">
                     <InputGroup.Text><CiSearch /></InputGroup.Text>
                     <Form.Control
@@ -122,8 +146,10 @@ export default function Quizzes() {
 
                                     </div>
                                     {/* lesson control */}
-                                    <div className="d-flex align-items-center ms-3">
-                                    <LessonControlButtons />
+                                    <div className="d-flex align-items-center ms-3 gap-2">
+                                    <FaTrash onClick={() => handleDelete(quiz._id)}/>
+                                    <GreenCheckmark />
+                                    <IoEllipsisVertical className="fs-4"/>
                                     </div>
 
 
