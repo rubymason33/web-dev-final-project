@@ -7,6 +7,7 @@ import * as quizzesClient from "./client";
 import {addQuiz, updateQuiz} from "./reducer"
 import QuestionEditor from "./Questions/QuestionEditor";
 import EditingMenu from "./EditingMenu";
+import * as questionsClient from "./Questions/client"
 
 
 
@@ -46,6 +47,19 @@ export default function QuizEditor() {
         published: false
     }
     const [formData, setFormData] = useState(defaultQuiz)
+
+    // pass the db data to the questions editor once
+    const [workingQuestions, setWorkingQuestions] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchQuestions = async () => {
+            const fetched = await questionsClient.getQuestionsForQuiz(qid as string);
+            setWorkingQuestions(fetched);
+        };
+        if (qid) fetchQuestions();
+    }, [qid]);
+
+
     // only faculty can view the editor page
     useEffect(() => {
         if (!isFaculty) {
@@ -79,6 +93,7 @@ export default function QuizEditor() {
     }
     const handleSave = async (e: any) => {
         e.preventDefault();
+        // console.log("Working Questions to Save:", workingQuestions);
         try {
             if (existingQuiz) {
                 const updatedQuiz = await quizzesClient.updateQuiz({
@@ -315,39 +330,41 @@ export default function QuizEditor() {
                 </div>
                 </Col>
             </Row>
-
-            <hr />
-            <div className="wd-assignment-editor-end">
-                <Button
-                variant="danger"
-                className="float-end"
-                onClick={handleSaveandPublish}
-                >
-                Save and Publish
-                </Button>
-                <Button
-                variant="danger"
-                className="me-2 float-end"
-                onClick={handleSave}
-                >
-                Save
-                </Button>
-                <Button
-                variant="secondary"
-                className="me-2 float-end"
-                onClick={handleCancel}
-                >
-                Cancel
-                </Button>
-            </div>
             </Form>
         </div>
             </Tab>
             <Tab eventKey="questions" title="Questions" >
-                {/* Questions content */}
-                <QuestionEditor quizId={qid} />
+                {/* Questions content PASS IN THE DB HERE AND THEN */} 
+                <QuestionEditor
+                    workingQuestions={workingQuestions}
+                    setWorkingQuestions={setWorkingQuestions}
+                />
             </Tab>
         </Tabs>
+        <hr />
+        <div className="wd-assignment-editor-end">
+            <Button
+            variant="danger"
+            className="float-end"
+            onClick={handleSaveandPublish}
+            >
+            Save and Publish
+            </Button>
+            <Button
+            variant="danger"
+            className="me-2 float-end"
+            onClick={handleSave}
+            >
+            Save
+            </Button>
+            <Button
+            variant="secondary"
+            className="me-2 float-end"
+            onClick={handleCancel}
+            >
+            Cancel
+            </Button>
+        </div>
         </>
 
 

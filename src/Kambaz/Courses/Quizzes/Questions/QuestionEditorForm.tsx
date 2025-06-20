@@ -1,15 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button, Form, Row, Col } from "react-bootstrap";
-import * as questionsClient from "./client";
 import MultipleChoiceQuestion from "./QuestionBody/MultipleChoiceQuestion";
 import TrueFalseQuestion from "./QuestionBody/TrueFalseQuestion";
 import FillInTheBlankQuestion from "./QuestionBody/FillInTheBlankQuestion";
-
+import { v4 as uuidv4 } from "uuid";
 
 const QUESTION_TYPES = ["Multiple Choice", "True/False", "Fill in the Blank"];
 
 export default function QuestionEditorForm({
-    quizId,
     question = {},
     mode = "new",
     questionType,
@@ -18,7 +16,6 @@ export default function QuestionEditorForm({
     onUpdate,
     onDelete,
 }: {
-    quizId: string;
     question?: any;
     mode: "new" | "edit";
     questionType?: string;
@@ -32,57 +29,37 @@ export default function QuestionEditorForm({
         points: question.points || 1,
         questionType: question.questionType || questionType || "Multiple Choice",
         questionText: question.questionText || "",
-        // default to 2 choices for mcq, none for t/f
+        // mcq have at least 2 choices, t/f has none
         choices:
             (question.questionType || questionType) === "Multiple Choice"
-            ? question.choices || [
-                { text: "", isCorrect: false },
-                { text: "", isCorrect: false }
-                ]
-            : [],
+                ? question.choices || [
+                    { text: "", isCorrect: false },
+                    { text: "", isCorrect: false }
+                  ]
+                : [],
         correctAnswer: question.correctAnswer ?? true,
         possibleAnswers: question.possibleAnswers || [],
         caseSensitive: question.caseSensitive || false,
-        _id: question._id,
+        _id: question._id || uuidv4(),
     });
-
-    useEffect(() => {
-        if (mode === "edit" && onUpdate) {
-            onUpdate(form);
-        }
-    }, [form]);
 
     const updateField = (field: string, value: any) => {
         const updated = { ...form, [field]: value };
         setForm(updated);
-        if (mode === "edit" && onUpdate) {
-            onUpdate(updated);
-        }
     };
 
-    const handleSave = async () => {
-        const payload = { ...form };
-        await questionsClient.createQuestion(quizId, payload);
-        if (onSaved) onSaved();
+    const handleLocalSave = () => {
+        if (onUpdate) onUpdate(form); // push to local
+        if (onSaved) onSaved();       // exit edit mode
     };
 
-    const handleDelete = async () => {
+    const handleDelete = () => {
         if (confirm("Are you sure you want to delete this question?")) {
-            await questionsClient.deleteQuestion(form._id);
-            if (onSaved) onSaved();
             if (onDelete) onDelete();
-        }
-    };
-    
-    const handleUpdate = async () => {
-        if (form._id) {
-            await questionsClient.updateQuestion(form._id, form); 
             if (onSaved) onSaved();
-            if (onCancel) onCancel();
         }
     };
 
-    // Each has title, points, save/cancel but needs the UI for the right quesiton
     const renderBody = () => {
         switch (form.questionType) {
             case "Multiple Choice":
@@ -99,7 +76,6 @@ export default function QuestionEditorForm({
     return (
         <div className="border rounded p-4 mb-4 bg-light">
             <Row className="align-items-center mb-3">
-                {/* all types have title, points, dropdown */}
                 <Col>
                     <Form.Control
                         type="text"
@@ -134,61 +110,22 @@ export default function QuestionEditorForm({
                 </Col>
             </Row>
             <hr />
-
-            {/* grab the respective question type */}
             {renderBody()}
-
-            {/* <div className="d-flex justify-content-end gap-2 mt-3">
+            <div className="d-flex justify-content-end gap-2 mt-3">
                 {mode === "edit" && (
-                    <Button variant="outline-danger" onClick={handleDelete}>
-                        Delete
-                    </Button>
-                )}
-                {mode === "new" && onCancel && (
-                    <Button variant="secondary" onClick={onCancel}>
-                        Cancel
-                    </Button>
+                    <>
+                        <Button variant="secondary" onClick={onCancel}>Cancel</Button>
+                        <Button variant="danger" onClick={handleLocalSave}>Save</Button>
+                        <Button variant="outline-danger" onClick={handleDelete}>Delete</Button>
+                    </>
                 )}
                 {mode === "new" && (
-                    <Button variant="danger" onClick={handleSave}>
-                        Save
-                    </Button>
+                    <>
+                        <Button variant="secondary" onClick={onCancel}>Cancel</Button>
+                        <Button variant="danger" onClick={handleLocalSave}>Save</Button>
+                    </>
                 )}
-            </div> */}
-            <div className="d-flex justify-content-end gap-2 mt-3">
-  {mode === "edit" && (
-    <>
-      <Button
-        variant="secondary"
-        onClick={() => onCancel?.()}
-      >
-        Cancel
-      </Button>
-      <Button
-        variant="danger"
-        onClick={handleUpdate}
-        >
-        Save
-      </Button>
-    </>
-  )}
-  {mode === "edit" && (
-    <Button variant="outline-danger" onClick={handleDelete}>
-      Delete
-    </Button>
-  )}
-  {mode === "new" && onCancel && (
-    <Button variant="secondary" onClick={onCancel}>
-      Cancel
-    </Button>
-  )}
-  {mode === "new" && (
-    <Button variant="danger" onClick={handleSave}>
-      Save
-    </Button>
-  )}
-</div>
-
+            </div>
         </div>
     );
 }
