@@ -1,7 +1,8 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import * as db from "../../Database";
 import { Button, FormControl, FormLabel } from "react-bootstrap";
 import { TiPencil } from "react-icons/ti";
+import { useSelector } from "react-redux";
 
 export default function QuizDetails() {
     const { cid, qid } = useParams();
@@ -12,7 +13,8 @@ export default function QuizDetails() {
     if (!quiz) {
         return <div className="p-4"><h3>Quiz not found.</h3></div>;
     }
-
+    const { currentUser } = useSelector((state: any) => state.accountReducer);
+    const isFacultyorAdmin = currentUser?.role === "FACULTY" || currentUser?.role ==="ADMIN";
     // Helper function to format ISO 8601 duration
     function formatTimeLimit(durationStr: any) {
         if (!durationStr) return "";
@@ -44,18 +46,26 @@ export default function QuizDetails() {
         return new Date(dateString).toLocaleString('en-US', options);
     }
 
+    function processEdit() {
+        
+    }
 
     return (
         <div>
             <div id="wd-quiz-details-header" className="mb-3">
-                <div className="d-flex justify-content-end mb-2">
-                    <Button className="border-0 bg-secondary text-dark btn-lg me-2">
+                {isFacultyorAdmin && (<div className="d-flex justify-content-end mb-2">
+                    <Button  as={Link} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/edit`} className="border-0 bg-secondary text-dark btn-lg me-2">
                         <TiPencil className="fs-4"/> Edit
                     </Button>
-                    <Button className="border-0 bg-secondary text-dark btn-lg">
+                    <Button as={Link} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take/preview`}  className="border-0 bg-secondary text-dark btn-lg">
                         Preview
                     </Button>
-                </div>
+                </div>)}
+                {!isFacultyorAdmin && (<div className="d-flex justify-content-end mb-2">
+                <Button as={Link} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take`} className="border-0 bg-danger btn-lg me-2">
+                        Start
+                    </Button>
+                </div>)}
                 <h1 className="mb-3">{quiz.title}</h1>
             </div>
 
@@ -133,9 +143,19 @@ export default function QuizDetails() {
                 </tbody>
             </table>
             <div className="d-flex justify-content-center">
-            <Button className="bg-danger border-0 btn-lg">
+                {isFacultyorAdmin ? 
+                <Button className="bg-danger border-0 btn-lg"
+                as={Link}
+                to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take/preview`}>
                 Preview
-            </Button>
+                </Button>
+                :
+                <Button className="bg-danger border-0 btn-lg"
+                as={Link}
+                to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take`}>
+                Start
+                </Button>}
+            
             </div>
         </div>
     );

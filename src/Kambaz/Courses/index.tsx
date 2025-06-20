@@ -57,6 +57,7 @@ import * as coursesClient from "./client"
 import People from "./People/People";
 import Quizzes from "./Quizzes";
 import QuizDetails from "./Quizzes/QuizDetails";
+import QuizEditor from "./Quizzes/Editor";
 
 export default function Courses() {
     const { cid } = useParams();
@@ -104,6 +105,7 @@ export default function Courses() {
                         <Route path="Zoom" element={<h2>Zoom</h2>} />
                         <Route path="Quizzes" element={<h2><Quizzes /></h2>} />
                         <Route path="Quizzes/:qid" element={<h2><QuizDetails /></h2>} />
+                        <Route path="Quizzes/:qid/edit" element={<h2><QuizEditor /></h2>} />
                         <Route path="Grades" element={<h2>Grades</h2>} />
                         <Route path="People" element={<People />} />
                     </Routes>
