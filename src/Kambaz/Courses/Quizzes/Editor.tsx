@@ -28,7 +28,7 @@ export default function QuizEditor() {
         createdBy: currentUser._id,
         description: "",
         course: cid,
-        points: 0,
+        points: 25,
         questions: 0,
         status: "Not available until",
         quizType: "Graded Quiz",
@@ -37,7 +37,7 @@ export default function QuizEditor() {
         timeLimit: 20,
         timeLimitOn: true,
         multipleAttempts: false,
-        howManyAttempts: 1,
+        maxAttempts: 1,
         showCorrectAnswers: "Immediately",
         accessCode: "",
         oneQuestionAtTime: true,
@@ -98,11 +98,16 @@ export default function QuizEditor() {
     const handleSave = async (e: any) => {
         e.preventDefault();
         let newId = qid
+        const status = calculateQuizStatus()
+        if (!status) {
+            return;
+        }
+        const updatedFormData = { ...formData, status: status };
         try {
             if (existingQuiz) {
                 console.log("existing")
                 const updatedQuiz = await quizzesClient.updateQuiz({
-                    ...formData,
+                    ...updatedFormData,
                     _id: existingQuiz._id
                 });
                 dispatch(updateQuiz(updatedQuiz));
@@ -110,7 +115,7 @@ export default function QuizEditor() {
                 console.log("new")
                 const newQuiz = await quizzesClient.createQuizForCourse(
                     cid as string,
-                    formData
+                    updatedFormData
                 );
                 newId = newQuiz._id
                 dispatch(addQuiz(newQuiz));
@@ -123,7 +128,11 @@ export default function QuizEditor() {
 
     const handleSaveandPublish = async (e: any) => {
         e.preventDefault();
-        const updatedFormData = { ...formData, published: true };
+        const status = calculateQuizStatus()
+        if (!status) {
+            return;
+        }
+        const updatedFormData = { ...formData, published: true, status: status };
         try {
             if (existingQuiz) {
                 const updatedQuiz = await quizzesClient.updateQuiz({
@@ -143,6 +152,32 @@ export default function QuizEditor() {
             console.error("Error saving quiz:", error);
         }
     };
+
+    function calculateQuizStatus() {
+        const now = new Date();
+        const available = new Date(formData.availableDate);
+        const until = new Date(formData.untilDate);
+        const due = new Date(formData.dueDate)
+        if (available > until) {
+            alert("Quiz Available Date must be before Open Until date")
+            return null
+        }
+        if (due < available) {
+            alert("Quiz cannot be due before it is available")
+            return null
+        }
+        if (due > until) {
+            alert("Quiz cannot be due after it is available")
+            return null
+        }
+        if (now < available) {
+          return "Not available until";
+        } else if (now > until) {
+          return "Closed";
+        } else {
+          return "Available";
+        }
+      }
 
     const handleCancel = () => {
         navigate("../Quizzes");
@@ -189,7 +224,6 @@ export default function QuizEditor() {
                     type="number"
                     id="wd-points"
                     name="points"
-                    placeholder="25"
                     value={formData.points}
                     onChange={handleChange}
                     className="" />
@@ -246,7 +280,7 @@ export default function QuizEditor() {
                 <div className="d-flex gap-5">
                     <Form.Check type="checkbox" label="Time Limit" name="timeLimitOn" checked={formData.timeLimitOn} onChange={handleChange}/>
                     <Form.Group className="d-flex gap-2">
-                        <Form.Control type="number" value={formData.timeLimit} name="timeLimit" onChange={handleChange} style={{ width: "60px" }}/>
+                        <Form.Control type="number" defaultValue={formData.timeLimit} name="timeLimit" onChange={handleChange} style={{ width: "60px" }}/>
                         <Form.Label>Minutes</Form.Label>
                     </Form.Group>
 
@@ -255,7 +289,7 @@ export default function QuizEditor() {
                     <Form.Check type="checkbox" label="Allow Multiple Attempts"  name="multipleAttempts"    checked={formData.multipleAttempts} onChange={handleChange}/>
                     {(formData.multipleAttempts)  && 
                     (<div className="mt-2 d-flex gap-2">
-                    <Form.Control type="number" name="maxAttempts" value={formData.maxAttempts} style={{ width: "60px" }} onChange={handleChange}/>
+                    <Form.Control type="number" name="maxAttempts" defaultValue={formData.maxAttempts} style={{ width: "60px" }} onChange={handleChange}/>
                         <Form.Label className="">Allowed Attempts</Form.Label>                    </div>)}
                 </div>
 
