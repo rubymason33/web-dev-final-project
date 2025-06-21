@@ -60,6 +60,7 @@ export default function QuestionEditorForm({
         }
     };
 
+    // each question has same "header" and "footer" but different content
     const renderBody = () => {
         switch (form.questionType) {
             case "Multiple Choice":
@@ -112,6 +113,7 @@ export default function QuestionEditorForm({
             <hr />
             {renderBody()}
             <div className="d-flex justify-content-end gap-2 mt-3">
+                {/* handles updates */}
                 {mode === "edit" && (
                     <>
                         <Button variant="secondary" onClick={onCancel}>Cancel</Button>
@@ -119,6 +121,7 @@ export default function QuestionEditorForm({
                         <Button variant="outline-danger" onClick={handleDelete}>Delete</Button>
                     </>
                 )}
+                {/* handles creates */}
                 {mode === "new" && (
                     <>
                         <Button variant="secondary" onClick={onCancel}>Cancel</Button>

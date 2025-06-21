@@ -31,29 +31,29 @@ export default function QuestionEditor({
     const [newType, setNewType] = useState("Multiple Choice");
     const [editingId, setEditingId] = useState<string | null>(null);
 
-    // Add question
     const addQuestionHandler = async (newQuestion: Question) => {
         const created = await questionsClient.createQuestion(quizId, newQuestion);
         setDisplayQuestions((prev) => [...prev, created]);
     };
-
-    // Update question
     const updateQuestionHandler = async (updated: Question) => {
         await questionsClient.updateQuestion(updated._id, updated);
         setDisplayQuestions((prev) =>
             prev.map((q) => (q._id === updated._id ? updated : q))
         );
     };
-
-    // Delete question
     const deleteQuestionHandler = async (id: string) => {
         await questionsClient.deleteQuestion(id);
         setDisplayQuestions((prev) => prev.filter((q) => q._id !== id));
     };
 
     useEffect(() => {
-        setDisplayQuestions(originalQuestions);
-    }, [originalQuestions]);
+        const fetchCurrentDB = async () => {
+            const current = await questionsClient.getQuestionsForQuiz(quizId);
+            setDisplayQuestions(current); // always reflects db
+        };
+        fetchCurrentDB();
+    }, [quizId]);
+
 
     return (
         <div>
@@ -85,6 +85,7 @@ export default function QuestionEditor({
                 />
             )}
 
+            {/* collapse when not editing current */}
             {displayQuestions.map((q) =>
                 editingId === q._id ? (
                 <QuestionEditorForm
