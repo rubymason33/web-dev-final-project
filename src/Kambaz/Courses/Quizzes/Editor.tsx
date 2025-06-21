@@ -4,13 +4,10 @@ import * as db from "../../Database";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect } from "react";
 import * as quizzesClient from "./client";
-import { FaItalic } from "react-icons/fa";
-import { FaUnderline } from "react-icons/fa";
-import { AiOutlineFontColors } from "react-icons/ai";
-import { FaHighlighter } from "react-icons/fa6";
-import { HiDotsVertical } from "react-icons/hi";
-import { FaChevronDown } from "react-icons/fa";
 import {addQuiz, updateQuiz} from "./reducer"
+import QuestionEditor from "./Questions/QuestionEditor";
+import EditingMenu from "./EditingMenu";
+import * as questionsClient from "./Questions/client"
 
 
 
@@ -50,6 +47,19 @@ export default function QuizEditor() {
         published: false
     }
     const [formData, setFormData] = useState(defaultQuiz)
+
+    // pass the db data to the questions editor once
+    const [workingQuestions, setWorkingQuestions] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchQuestions = async () => {
+            const fetched = await questionsClient.getQuestionsForQuiz(qid as string);
+            setWorkingQuestions(fetched);
+        };
+        if (qid) fetchQuestions();
+    }, [qid]);
+
+
     // only faculty can view the editor page
     useEffect(() => {
         if (!isFaculty) {
@@ -83,6 +93,7 @@ export default function QuizEditor() {
     }
     const handleSave = async (e: any) => {
         e.preventDefault();
+        // console.log("Working Questions to Save:", workingQuestions);
         try {
             if (existingQuiz) {
                 const updatedQuiz = await quizzesClient.updateQuiz({
@@ -155,27 +166,7 @@ export default function QuizEditor() {
                 <Form.Group className="mb-5" id="wd-instructions">
                     <Form.Label className="fw-bold">Quiz Instructions</Form.Label>
                     <br></br>
-                    <div className="ms-4" style={{ fontSize: "1rem" }}>
-                        <div className="d-flex gap-3">
-                            <span>Edit</span> 
-                            <span>View</span>
-                            <span>Insert</span>
-                            <span>Format</span>
-                            <span>Tools</span>
-                            <span>Table</span>
-                        </div> <br/>
-                        <div className="d-flex gap-5">
-                            <h6>12pt<FaChevronDown/></h6> 
-                            <h6>Paragraph<FaChevronDown/></h6> |
-                            <h6 className="fw-bold">B</h6>
-                            <FaItalic />
-                            <FaUnderline />
-                            <AiOutlineFontColors />
-                            <FaHighlighter /> | 
-                            <HiDotsVertical />
-
-                        </div>
-                    </div>
+                    <EditingMenu />
                     <Form.Control as="textarea" rows={5} placeholder="Description" defaultValue={formData.instructions} />
                 </Form.Group>
             
@@ -339,39 +330,41 @@ export default function QuizEditor() {
                 </div>
                 </Col>
             </Row>
-
-            <hr />
-            <div className="wd-assignment-editor-end">
-                <Button
-                variant="danger"
-                className="float-end"
-                onClick={handleSaveandPublish}
-                >
-                Save and Publish
-                </Button>
-                <Button
-                variant="danger"
-                className="me-2 float-end"
-                onClick={handleSave}
-                >
-                Save
-                </Button>
-                <Button
-                variant="secondary"
-                className="me-2 float-end"
-                onClick={handleCancel}
-                >
-                Cancel
-                </Button>
-            </div>
             </Form>
         </div>
             </Tab>
             <Tab eventKey="questions" title="Questions" >
-                {/* Questions content */}
-                <div>List of quiz Questions</div>
+                {/* Questions content PASS IN THE DB HERE AND THEN */} 
+                <QuestionEditor
+                    workingQuestions={workingQuestions}
+                    setWorkingQuestions={setWorkingQuestions}
+                />
             </Tab>
         </Tabs>
+        <hr />
+        <div className="wd-assignment-editor-end">
+            <Button
+            variant="danger"
+            className="float-end"
+            onClick={handleSaveandPublish}
+            >
+            Save and Publish
+            </Button>
+            <Button
+            variant="danger"
+            className="me-2 float-end"
+            onClick={handleSave}
+            >
+            Save
+            </Button>
+            <Button
+            variant="secondary"
+            className="me-2 float-end"
+            onClick={handleCancel}
+            >
+            Cancel
+            </Button>
+        </div>
         </>
 
 

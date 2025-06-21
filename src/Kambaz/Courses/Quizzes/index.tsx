@@ -147,7 +147,7 @@ export default function Quizzes() {
                                     </div>
                                     {/* lesson control */}
                                     <div className="d-flex align-items-center ms-3 gap-2">
-                                    <FaTrash onClick={() => handleDelete(quiz._id)}/>
+                                    <FaTrash className="text-danger" onClick={() => handleDelete(quiz._id)}/>
                                     <GreenCheckmark />
                                     <IoEllipsisVertical className="fs-4"/>
                                     </div>
