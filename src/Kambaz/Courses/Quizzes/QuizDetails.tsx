@@ -1,21 +1,30 @@
-import { useParams, Link } from "react-router-dom";
-import { Button } from "react-bootstrap";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { Button, Modal } from "react-bootstrap";
 import { TiPencil } from "react-icons/ti";
 import { useSelector } from "react-redux";
-import { useEffect, useState } from "react";
-import * as quizzesClient from "./client"
+import { useState, useEffect } from "react";
+import * as quizzesClient from "./client";
+import * as attemptsClient from "./Attempts/client";
 
 export default function QuizDetails() {
     const { cid, qid } = useParams();
+    const navigate = useNavigate();
+    
     const [quiz, setQuiz] = useState<any>(null);
+    
     const { currentUser } = useSelector((state: any) => state.accountReducer);
-    const isFacultyorAdmin = currentUser?.role === "FACULTY" || currentUser?.role ==="ADMIN";
+    const isFacultyorAdmin = currentUser?.role === "FACULTY" || currentUser?.role === "ADMIN";
+    const isStudent = currentUser?.role === "STUDENT";
+    
+    const [latestAttempt, setLatestAttempt] = useState<any>(null);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
     useEffect(() => {
         const fetchQuiz = async () => {
             try {
                 const found = await quizzesClient.findQuizById(qid!);
-                setQuiz(found);
+                setQuiz(found.data);
             } catch (err) {
                 console.error("Failed to fetch quiz:", err);
             }
@@ -23,11 +32,28 @@ export default function QuizDetails() {
         fetchQuiz();
     }, [qid]);
 
-    if (!quiz) {
-        return <div className="p-4"><h3>Loading quiz...</h3></div>;
-    }
+    useEffect(() => {
+        const checkLatestAttempt = async () => {
+            if (isStudent && quiz?._id) {
+                try {
+                    const attempt = await attemptsClient.getLatestAttempt(quiz._id);
+                    if (attempt && attempt.completedAt) {
+                        setLatestAttempt(attempt);
+                    }
+                } catch (error) {
+                    console.log("No previous attempt found");
+                    console.log(error)
+                }
+            }
+        };
 
-    // Helper function to format ISO 8601 duration
+        checkLatestAttempt();
+    }, [quiz?._id, isStudent]);
+
+    const handleStartQuiz = async () => {
+        navigate(`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take`);
+    };
+
     function formatTimeLimit(durationStr: any) {
         if (!durationStr) return "";
         if (durationStr.startsWith("PT")) {
@@ -46,7 +72,6 @@ export default function QuizDetails() {
         return durationStr;
     }
 
-    // Helper function to format dates
     function formatDate(dateString: any) {
         if (!dateString) return "";
         const options: Intl.DateTimeFormatOptions = {
@@ -58,6 +83,29 @@ export default function QuizDetails() {
         return new Date(dateString).toLocaleString('en-US', options);
     }
 
+    const ErrorModal = () => (
+        <Modal show={showErrorModal} onHide={() => setShowErrorModal(false)} centered>
+            <Modal.Header closeButton>
+                <Modal.Title>Cannot Start Quiz</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <p>{errorMessage}</p>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button 
+                    variant="primary" 
+                    onClick={() => setShowErrorModal(false)}
+                >
+                    OK
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    );
+
+    if (!quiz) {
+        return <div className="p-4"><h3>Loading quiz...</h3></div>;
+    }
+
     return (
         <div>
             <div id="wd-quiz-details-header" className="mb-3">
@@ -65,16 +113,44 @@ export default function QuizDetails() {
                     <Button  as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/edit`} className="border-0 bg-secondary text-dark btn-lg me-2">
                         <TiPencil className="fs-4"/> Edit
                     </Button>
-                    <Button as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take/preview`}  className="border-0 bg-secondary text-dark btn-lg">
+                    <Button as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/preview`}  className="border-0 bg-secondary text-dark btn-lg">
                         Preview
                     </Button>
                 </div>)}
-                {!isFacultyorAdmin && (<div className="d-flex justify-content-end mb-2">
-                <Button as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take`} className="border-0 bg-danger btn-lg me-2">
-                        Start
-                    </Button>
-                </div>)}
+                
+                {isStudent && (
+                    <div className="d-flex justify-content-end mb-2">
+                        <div className="d-flex gap-2">
+                            <Button 
+                                className="border-0 bg-danger btn-lg"
+                                onClick={handleStartQuiz}
+                            >
+                                Start
+                            </Button>
+                            
+                            {latestAttempt && (
+                                <Button 
+                                    variant="secondary"
+                                    className="btn-lg"
+                                    onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/score`)}
+                                >
+                                    View Score
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                )}
                 <h1 className="mb-3">{quiz.title}</h1>
+                
+                {isStudent && latestAttempt && (
+                    <div className="mb-3 p-3 bg-light rounded border">
+                        <h6 className="mb-2 text-muted">Latest Attempt</h6>
+                        <div className="small text-muted">
+                            <div>Completed: {new Date(latestAttempt.completedAt).toLocaleDateString()} at {new Date(latestAttempt.completedAt).toLocaleTimeString()}</div>
+                            <div>Score: {latestAttempt.score}/{latestAttempt.totalPoints} ({Math.round((latestAttempt.score / latestAttempt.totalPoints) * 100)}%)</div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="mb-4">
@@ -125,39 +201,55 @@ export default function QuizDetails() {
                     </tr>
                 </tbody>
             </table>
+            
             <table className="table table-borderless table-sm w-100 fs-4">
                 <thead className="border-bottom">
                     <tr>
-                    <th className="text-dark fw-bold py-2">Due</th>
-                    <th className="text-dark fw-bold py-2">For</th>
-                    <th className="text-dark fw-bold py-2">Available from</th>
-                    <th className="text-dark fw-bold py-2">Until</th>
+                        <th className="text-dark fw-bold py-2">Due</th>
+                        <th className="text-dark fw-bold py-2">For</th>
+                        <th className="text-dark fw-bold py-2">Available from</th>
+                        <th className="text-dark fw-bold py-2">Until</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr className="border-bottom">
-                    <td className="py-4">{formatDate(quiz.dueDate)}</td>
-                    <td className="py-4">{quiz.availableFor}</td>
-                    <td className="py-4">{formatDate(quiz.availableDate)}</td>
-                    <td className="py-4">{formatDate(quiz.untilDate)}</td>
+                        <td className="py-4">{formatDate(quiz.dueDate)}</td>
+                        <td className="py-4">{quiz.availableFor || "Everyone"}</td>
+                        <td className="py-4">{formatDate(quiz.availableDate)}</td>
+                        <td className="py-4">{formatDate(quiz.untilDate)}</td>
                     </tr>
                 </tbody>
             </table>
             <div className="d-flex justify-content-center">
-                {isFacultyorAdmin ? 
-                <Button className="bg-danger border-0 btn-lg"
-                as={Link as any}
-                to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take/preview`}>
-                Preview
-                </Button>
-                :
-                <Button className="bg-danger border-0 btn-lg"
-                as={Link as any}
-                to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take`}>
-                Start
-                </Button>}
-            
+                {isFacultyorAdmin ? (
+                    <Button className="bg-danger border-0 btn-lg"
+                    as={Link as any}
+                    to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/preview`}>
+                    Preview
+                    </Button>
+                ) : (
+                    <div className="d-flex gap-2">
+                        <Button 
+                            className="bg-danger border-0 btn-lg"
+                            onClick={handleStartQuiz}
+                        >
+                            Start
+                        </Button>
+                        
+                        {latestAttempt && (
+                            <Button 
+                                variant="secondary"
+                                className="btn-lg"
+                                onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/score`)}
+                            >
+                                View Score
+                            </Button>
+                        )}
+                    </div>
+                )}
             </div>
+
+            <ErrorModal />
         </div>
     );
 }
