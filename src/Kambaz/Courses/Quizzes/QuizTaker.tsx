@@ -481,17 +481,11 @@ export default function QuizTaker() {
             {submitted && isPreview && (
                 <div className="container-fluid p-4">
                     {/* Score Summary */}
-                    <div className="text-center mb-4 p-4 border rounded bg-light">
-                        <h3>Quiz Results (Preview)</h3>
+                    <div className="text-start mb-4 p-4 border rounded bg-light">
+                        <h3 className="fw-bold">Quiz Results</h3>
                         <div className="mb-3">
                             <h4>Score: {score} / {totalPoints} ({Math.round((score / totalPoints) * 100)}%)</h4>
                         </div>
-                        <Button 
-                            variant="outline-secondary"
-                            onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/edit`)}
-                        >
-                            🏷️ Keep Editing This Quiz
-                        </Button>
                     </div>
 
                     {/* Detailed Questions and Answers */}
@@ -619,6 +613,15 @@ export default function QuizTaker() {
                             );
                         })}
                     </div>
+
+                    <Button 
+                        variant="light" 
+                        className="border text-start py-2 w-100 mb-4"
+                        onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/edit`)}
+                    >
+                        <FaPencil style={{ marginRight: "8px" }} />
+                    Keep Editing This Quiz
+                    </Button>
 
                     {/* Back Button */}
                     <div className="text-center">
