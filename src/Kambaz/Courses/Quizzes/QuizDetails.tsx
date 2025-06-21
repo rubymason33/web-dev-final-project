@@ -1,12 +1,37 @@
+import { useParams, Link } from "react-router-dom";
+import { Button } from "react-bootstrap";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button, FormControl, FormLabel, Modal } from "react-bootstrap";
 import { TiPencil } from "react-icons/ti";
+import { useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import * as quizzesClient from "./client"
 import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
 import * as attemptsClient from "./Attempts/client";
 
 export default function QuizDetails() {
     const { cid, qid } = useParams();
+    const [quiz, setQuiz] = useState<any>(null);
+    const { currentUser } = useSelector((state: any) => state.accountReducer);
+    const isFacultyorAdmin = currentUser?.role === "FACULTY" || currentUser?.role ==="ADMIN";
+
+    useEffect(() => {
+        const fetchQuiz = async () => {
+            try {
+                const found = await quizzesClient.findQuizById(qid!);
+                setQuiz(found);
+            } catch (err) {
+                console.error("Failed to fetch quiz:", err);
+            }
+        };
+        fetchQuiz();
+    }, [qid]);
+
+    if (!quiz) {
+        return <div className="p-4"><h3>Loading quiz...</h3></div>;
+    }
+
     const navigate = useNavigate();
     const quizzes = useSelector((state: any) => state.quizzesReducer.quizzes);
     const quiz = quizzes.find(
@@ -145,6 +170,19 @@ export default function QuizDetails() {
     return (
         <div>
             <div id="wd-quiz-details-header" className="mb-3">
+                {isFacultyorAdmin && (<div className="d-flex justify-content-end mb-2">
+                    <Button  as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/edit`} className="border-0 bg-secondary text-dark btn-lg me-2">
+                        <TiPencil className="fs-4"/> Edit
+                    </Button>
+                    <Button as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take/preview`}  className="border-0 bg-secondary text-dark btn-lg">
+                        Preview
+                    </Button>
+                </div>)}
+                {!isFacultyorAdmin && (<div className="d-flex justify-content-end mb-2">
+                <Button as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take`} className="border-0 bg-danger btn-lg me-2">
+                        Start
+                    </Button>
+                </div>)}
                 {isFacultyorAdmin && (
                     <div className="d-flex justify-content-end mb-2">
                         <Button as={Link} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/edit`} className="border-0 bg-secondary text-dark btn-lg me-2">
@@ -193,6 +231,9 @@ export default function QuizDetails() {
                 )}
             </div>
 
+            <div className="mb-4">
+                <p className="fs-4">{quiz.description}</p>
+            </div>
             {/* Quiz Description - Only show if there's content and make it display-only */}
             {quiz.description && (
                 <div className="mb-4 p-3 bg-light rounded border">
@@ -263,6 +304,21 @@ export default function QuizDetails() {
                     </tr>
                 </tbody>
             </table>
+            <div className="d-flex justify-content-center">
+                {isFacultyorAdmin ? 
+                <Button className="bg-danger border-0 btn-lg"
+                as={Link as any}
+                to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take/preview`}>
+                Preview
+                </Button>
+                :
+                <Button className="bg-danger border-0 btn-lg"
+                as={Link as any}
+                to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take`}>
+                Start
+                </Button>}
+            
+            </div>
 
             {/* Error Modal */}
             <ErrorModal />
