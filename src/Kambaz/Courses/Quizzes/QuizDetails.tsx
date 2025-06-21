@@ -1,33 +1,37 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Button, FormControl, FormLabel, Modal } from "react-bootstrap";
+import { Button, Modal } from "react-bootstrap";
 import { TiPencil } from "react-icons/ti";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { useState, useEffect } from "react";
+import * as quizzesClient from "./client";
 import * as attemptsClient from "./Attempts/client";
 
 export default function QuizDetails() {
     const { cid, qid } = useParams();
     const navigate = useNavigate();
-    const quizzes = useSelector((state: any) => state.quizzesReducer.quizzes);
-    const quiz = quizzes.find(
-        (q: any) => q.course === cid && q._id === qid
-    );
+    
+    const [quiz, setQuiz] = useState<any>(null);
     
     const { currentUser } = useSelector((state: any) => state.accountReducer);
     const isFacultyorAdmin = currentUser?.role === "FACULTY" || currentUser?.role === "ADMIN";
     const isStudent = currentUser?.role === "STUDENT";
     
-    // State for attempt handling
     const [latestAttempt, setLatestAttempt] = useState<any>(null);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
-    
-    // handle not finding a match
-    if (!quiz) {
-        return <div className="p-4"><h3>Quiz not found.</h3></div>;
-    }
 
-    // Check for latest attempt when component loads
+    useEffect(() => {
+        const fetchQuiz = async () => {
+            try {
+                const found = await quizzesClient.findQuizById(qid!);
+                setQuiz(found.data);
+            } catch (err) {
+                console.error("Failed to fetch quiz:", err);
+            }
+        };
+        fetchQuiz();
+    }, [qid]);
+
     useEffect(() => {
         const checkLatestAttempt = async () => {
             if (isStudent && quiz?._id) {
@@ -37,7 +41,6 @@ export default function QuizDetails() {
                         setLatestAttempt(attempt);
                     }
                 } catch (error) {
-                    // No attempt found or error - that's okay
                     console.log("No previous attempt found");
                     console.log(error)
                 }
@@ -47,49 +50,10 @@ export default function QuizDetails() {
         checkLatestAttempt();
     }, [quiz?._id, isStudent]);
 
-    // Handle quiz start with error checking
     const handleStartQuiz = async () => {
-        try {
-            // Check if quiz can be started by attempting to create an attempt
-            // This will throw an error if not eligible, preventing navigation
-            const attempt = await attemptsClient.startQuizAttempt(quiz._id);
-            
-            // If we get here, the quiz can be started - navigate to take page
-            navigate(`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take`);
-        } catch (error: any) {
-            // Handle different error cases - show modal instead of navigating
-            let message = "Could not start quiz. Please try again.";
-            
-            if (error.response) {
-                switch (error.response.status) {
-                    case 403:
-                        if (error.response.data.message.includes("not published")) {
-                            message = "This quiz is not yet published.";
-                        } else if (error.response.data.message.includes("Maximum attempts")) {
-                            message = "You have reached the maximum number of attempts for this quiz.";
-                        } else if (error.response.data.message.includes("availability")) {
-                            message = "This quiz is not available at this time. Please check the availability dates.";
-                        } else if (error.response.data.message.includes("due")) {
-                            message = "The due date for this quiz has passed.";
-                        } else {
-                            message = error.response.data.message || message;
-                        }
-                        break;
-                    case 404:
-                        message = "Quiz not found.";
-                        break;
-                    default:
-                        message = error.response.data.message || message;
-                }
-            }
-            
-            // Show error modal instead of navigating
-            setErrorMessage(message);
-            setShowErrorModal(true);
-        }
+        navigate(`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take`);
     };
 
-    // Helper function to format ISO 8601 duration
     function formatTimeLimit(durationStr: any) {
         if (!durationStr) return "";
         if (durationStr.startsWith("PT")) {
@@ -108,7 +72,6 @@ export default function QuizDetails() {
         return durationStr;
     }
 
-    // Helper function to format dates
     function formatDate(dateString: any) {
         if (!dateString) return "";
         const options: Intl.DateTimeFormatOptions = {
@@ -119,10 +82,7 @@ export default function QuizDetails() {
         };
         return new Date(dateString).toLocaleString('en-US', options);
     }
-    
-    const dispatch = useDispatch();
 
-    // Error Modal Component
     const ErrorModal = () => (
         <Modal show={showErrorModal} onHide={() => setShowErrorModal(false)} centered>
             <Modal.Header closeButton>
@@ -142,19 +102,21 @@ export default function QuizDetails() {
         </Modal>
     );
 
+    if (!quiz) {
+        return <div className="p-4"><h3>Loading quiz...</h3></div>;
+    }
+
     return (
         <div>
             <div id="wd-quiz-details-header" className="mb-3">
-                {isFacultyorAdmin && (
-                    <div className="d-flex justify-content-end mb-2">
-                        <Button as={Link} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/edit`} className="border-0 bg-secondary text-dark btn-lg me-2">
-                            <TiPencil className="fs-4"/> Edit
-                        </Button>
-                        <Button as={Link} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/preview`} className="border-0 bg-secondary text-dark btn-lg">
-                            Preview
-                        </Button>
-                    </div>
-                )}
+                {isFacultyorAdmin && (<div className="d-flex justify-content-end mb-2">
+                    <Button  as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/edit`} className="border-0 bg-secondary text-dark btn-lg me-2">
+                        <TiPencil className="fs-4"/> Edit
+                    </Button>
+                    <Button as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/preview`}  className="border-0 bg-secondary text-dark btn-lg">
+                        Preview
+                    </Button>
+                </div>)}
                 
                 {isStudent && (
                     <div className="d-flex justify-content-end mb-2">
@@ -178,10 +140,8 @@ export default function QuizDetails() {
                         </div>
                     </div>
                 )}
-                
                 <h1 className="mb-3">{quiz.title}</h1>
                 
-                {/* Show latest attempt info for students */}
                 {isStudent && latestAttempt && (
                     <div className="mb-3 p-3 bg-light rounded border">
                         <h6 className="mb-2 text-muted">Latest Attempt</h6>
@@ -193,12 +153,9 @@ export default function QuizDetails() {
                 )}
             </div>
 
-            {/* Quiz Description - Only show if there's content and make it display-only */}
-            {quiz.description && (
-                <div className="mb-4 p-3 bg-light rounded border">
-                    <div dangerouslySetInnerHTML={{ __html: quiz.description }} />
-                </div>
-            )}
+            <div className="mb-4">
+                <p className="fs-4">{quiz.description}</p>
+            </div>
             
             <table className="table table-borderless w-auto mb-5">
                 <tbody className="fs-4">
@@ -263,8 +220,35 @@ export default function QuizDetails() {
                     </tr>
                 </tbody>
             </table>
+            <div className="d-flex justify-content-center">
+                {isFacultyorAdmin ? (
+                    <Button className="bg-danger border-0 btn-lg"
+                    as={Link as any}
+                    to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/preview`}>
+                    Preview
+                    </Button>
+                ) : (
+                    <div className="d-flex gap-2">
+                        <Button 
+                            className="bg-danger border-0 btn-lg"
+                            onClick={handleStartQuiz}
+                        >
+                            Start
+                        </Button>
+                        
+                        {latestAttempt && (
+                            <Button 
+                                variant="secondary"
+                                className="btn-lg"
+                                onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/score`)}
+                            >
+                                View Score
+                            </Button>
+                        )}
+                    </div>
+                )}
+            </div>
 
-            {/* Error Modal */}
             <ErrorModal />
         </div>
     );
