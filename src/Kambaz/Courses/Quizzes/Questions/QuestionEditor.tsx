@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "react-bootstrap";
 import QuestionEditorForm from "./QuestionEditorForm";
 import { TiPencil } from "react-icons/ti";
+import * as questionsClient from "./client";
 
 
 // avoid the type 'never' errors
@@ -19,21 +20,40 @@ type Question = {
 };
 
 export default function QuestionEditor({
-    workingQuestions, // this comes from editor
-    setWorkingQuestions,
+    originalQuestions,
+    quizId,
 }: {
-    workingQuestions: Question[];
-    setWorkingQuestions: React.Dispatch<React.SetStateAction<Question[]>>;
+    originalQuestions: Question[];
+    quizId: string;
 }) {
+    const [displayQuestions, setDisplayQuestions] = useState<Question[]>(originalQuestions);
     const [adding, setAdding] = useState(false);
     const [newType, setNewType] = useState("Multiple Choice");
     const [editingId, setEditingId] = useState<string | null>(null);
 
-    const updateWorkingQuestion = (updatedQuestion: Question) => {
-        setWorkingQuestions((prev) =>
-        prev.map((q) => (q._id === updatedQuestion._id ? updatedQuestion : q))
+    const addQuestionHandler = async (newQuestion: Question) => {
+        const created = await questionsClient.createQuestion(quizId, newQuestion);
+        setDisplayQuestions((prev) => [...prev, created]);
+    };
+    const updateQuestionHandler = async (updated: Question) => {
+        await questionsClient.updateQuestion(updated._id, updated);
+        setDisplayQuestions((prev) =>
+            prev.map((q) => (q._id === updated._id ? updated : q))
         );
     };
+    const deleteQuestionHandler = async (id: string) => {
+        await questionsClient.deleteQuestion(id);
+        setDisplayQuestions((prev) => prev.filter((q) => q._id !== id));
+    };
+
+    useEffect(() => {
+        const fetchCurrentDB = async () => {
+            const current = await questionsClient.getQuestionsForQuiz(quizId);
+            setDisplayQuestions(current); // always reflects db
+        };
+        fetchCurrentDB();
+    }, [quizId]);
+
 
     return (
         <div>
@@ -57,9 +77,7 @@ export default function QuestionEditor({
                         setAdding(false);
                         setNewType("Multiple Choice");
                     }}
-                    onUpdate={(newQuestion) =>
-                        setWorkingQuestions((prev) => [...prev, newQuestion])
-                    }
+                    onSave={addQuestionHandler}
                     onSaved={() => {
                         setAdding(false);
                         setNewType("Multiple Choice");
@@ -67,17 +85,17 @@ export default function QuestionEditor({
                 />
             )}
 
-            {workingQuestions.map((q) =>
+            {/* collapse when not editing current */}
+            {displayQuestions.map((q) =>
                 editingId === q._id ? (
                 <QuestionEditorForm
-                    key={q._id + q.title + q.points}
+                    key={q._id}
                     mode="edit"
                     question={q}
-                    onUpdate={updateWorkingQuestion}
-                    onDelete={() => {
-                    const updated = workingQuestions.filter((wq) => wq._id !== q._id);
-                    setWorkingQuestions(updated);
-                    setEditingId(null);
+                    onSave={updateQuestionHandler}
+                    onDelete={async () => {
+                        await deleteQuestionHandler(q._id);
+                        setEditingId(null);
                     }}
                     onCancel={() => setEditingId(null)}
                     onSaved={() => setEditingId(null)}

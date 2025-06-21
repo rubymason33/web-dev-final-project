@@ -8,11 +8,24 @@ import QuestionEditor from "./Questions/QuestionEditor";
 import EditingMenu from "./EditingMenu";
 import * as questionsClient from "./Questions/client"
 
+type Choice = { text: string; isCorrect: boolean };
+type Question = {
+  _id: string;
+  title: string;
+  points: number;
+  questionType: "Multiple Choice" | "True/False" | "Fill in the Blank";
+  questionText: string;
+  choices: Choice[];
+  correctAnswer?: boolean;
+  possibleAnswers?: string[];
+  caseSensitive?: boolean;
+};
 
 
 export default function QuizEditor() {
     const [key, setKey] = useState("details");
     const { cid, qid } = useParams()
+    const sessionKey = `original-${qid}`; // use for cancel logic
     const quizzes = useSelector((state: any) =>
         state.quizzesReducer.quizzes
     );
@@ -52,16 +65,24 @@ export default function QuizEditor() {
     }
     const [formData, setFormData] = useState(defaultQuiz)
 
-    // pass the db data to the questions editor once
-    const [workingQuestions, setWorkingQuestions] = useState<any[]>([]);
-
+    // pass the db data to the questions editor at beginning
+    const [originalQuestions, setOriginalQuestions] = useState<Question[]>([]);
     useEffect(() => {
         const fetchQuestions = async () => {
-            const fetched = await questionsClient.getQuestionsForQuiz(qid as string);
-            setWorkingQuestions(fetched);
+            const res = await questionsClient.getQuestionsForQuiz(qid as string);
+
+            const stored = sessionStorage.getItem(`original-${qid}`);
+            if (stored) {
+            setOriginalQuestions(JSON.parse(stored));
+            } else {
+            setOriginalQuestions(res);
+            sessionStorage.setItem(`original-${qid}`, JSON.stringify(res));
+            }
         };
+
         if (qid) fetchQuestions();
     }, [qid]);
+
 
 
     // only faculty can view the editor page
@@ -97,7 +118,7 @@ export default function QuizEditor() {
     }
     const handleSave = async (e: any) => {
         e.preventDefault();
-        let newId = qid
+        let newId: string;
         const status = calculateQuizStatus()
         if (!status) {
             return;
@@ -111,6 +132,7 @@ export default function QuizEditor() {
                     _id: existingQuiz._id
                 });
                 dispatch(updateQuiz(updatedQuiz));
+                newId = existingQuiz._id;
             } else {
                 console.log("new")
                 const newQuiz = await quizzesClient.createQuizForCourse(
@@ -120,6 +142,7 @@ export default function QuizEditor() {
                 newId = newQuiz._id
                 dispatch(addQuiz(newQuiz));
             }
+            sessionStorage.removeItem(sessionKey); // clear the "original" questions state
             navigate(`../Quizzes/${newId}`);
         } catch (error) {
             console.error("Error saving quiz:", error);
@@ -147,6 +170,7 @@ export default function QuizEditor() {
                 );
                 dispatch(addQuiz(newQuiz));
             }
+            sessionStorage.removeItem(sessionKey); // clear the "original" questions state
             navigate(`../Quizzes`);
         } catch (error) {
             console.error("Error saving quiz:", error);
@@ -179,9 +203,38 @@ export default function QuizEditor() {
         }
       }
 
-    const handleCancel = () => {
-        navigate("../Quizzes");
+    // Revert the changes to when quiz first opened
+    const handleCancel = async () => {
+        if (!qid) return navigate("../Quizzes");
+
+        try {
+            const current: Question [] = await questionsClient.getQuestionsForQuiz(qid);
+
+            const deleted = current.filter(
+                (q) => !originalQuestions.some((oq) => oq._id === q._id)
+            );
+            const added = originalQuestions.filter(
+                (oq) => !current.some((q) => q._id === oq._id)
+            );
+            const updated = originalQuestions.filter((oq) => {
+                const curr = current.find((q) => q._id === oq._id);
+                return curr && JSON.stringify(curr) !== JSON.stringify(oq);
+            });
+
+            await Promise.all([
+                ...deleted.map((q) => questionsClient.deleteQuestion(q._id)),
+                ...added.map((q) => questionsClient.createQuestion(qid, q)),
+                ...updated.map((q) => questionsClient.updateQuestion(q._id, q)),
+            ]);
+
+            sessionStorage.removeItem(sessionKey); // clear the "original" questions state
+            navigate("../Quizzes");
+        } catch (err) {
+            console.error("Error reverting changes:", err);
+            alert("An error occurred while cancelling changes.");
+        }
     };
+
 
     return (
         <>
@@ -417,11 +470,11 @@ export default function QuizEditor() {
             </Tab>
             <Tab eventKey="questions" title="Questions" >
 
- 
-                {/* Questions content PASS IN THE DB HERE AND THEN */} 
+
+                {/* Questions content */} 
                 <QuestionEditor
-                    workingQuestions={workingQuestions}
-                    setWorkingQuestions={setWorkingQuestions}
+                    originalQuestions={originalQuestions}
+                    quizId={qid as string}
                 />
             </Tab>
         </Tabs>
@@ -449,7 +502,6 @@ export default function QuizEditor() {
             Cancel
             </Button>
         </div>
-
         </>
 
 
