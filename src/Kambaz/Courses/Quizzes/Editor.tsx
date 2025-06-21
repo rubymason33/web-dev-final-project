@@ -10,15 +10,15 @@ import * as questionsClient from "./Questions/client"
 
 type Choice = { text: string; isCorrect: boolean };
 type Question = {
-  _id: string;
-  title: string;
-  points: number;
-  questionType: "Multiple Choice" | "True/False" | "Fill in the Blank";
-  questionText: string;
-  choices: Choice[];
-  correctAnswer?: boolean;
-  possibleAnswers?: string[];
-  caseSensitive?: boolean;
+    _id: string;
+    title: string;
+    points: number;
+    questionType: "Multiple Choice" | "True/False" | "Fill in the Blank";
+    questionText: string;
+    choices: Choice[];
+    correctAnswer?: boolean;
+    possibleAnswers?: string[];
+    caseSensitive?: boolean;
 };
 
 
@@ -255,7 +255,13 @@ export default function QuizEditor() {
             <Form>
                 <Form.Group className="mb-3" id="wd-name">
                     <Form.Label className="fw-bold">Quiz Title *</Form.Label>
-                    <Form.Control type="text" placeholder="Quiz Title" name="title" value={formData.title} onChange={handleChange} />
+                    <Form.Control
+                        type="text" 
+                        placeholder="Quiz Title" 
+                        name="title" 
+                        value={formData.title} 
+                        onChange={handleChange} 
+                    />
                 </Form.Group>
 
                 <Form.Group className="mb-5" id="wd-instructions">
@@ -263,7 +269,14 @@ export default function QuizEditor() {
                     <br></br>
 
                     <EditingMenu />
-                    <Form.Control as="textarea" rows={5} placeholder="Description" defaultValue={formData.description} />
+                    <Form.Control
+                        as="textarea"
+                        rows={5}
+                        placeholder="Description"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                    />
 
                 </Form.Group>
             

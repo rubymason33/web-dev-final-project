@@ -1,21 +1,32 @@
 import { useParams, Link } from "react-router-dom";
-import { Button, FormControl, FormLabel } from "react-bootstrap";
+import { Button } from "react-bootstrap";
 import { TiPencil } from "react-icons/ti";
-// import { useSelector, useDispatch } from "react-redux";
 import { useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import * as quizzesClient from "./client"
 
 export default function QuizDetails() {
     const { cid, qid } = useParams();
-    const quizzes = useSelector((state: any) => state.quizzesReducer.quizzes);
-    const quiz = quizzes.find(
-        (q: any) => q.course === cid && q._id === qid
-    );
-    // handle not finding a match
-    if (!quiz) {
-        return <div className="p-4"><h3>Quiz not found.</h3></div>;
-    }
+    const [quiz, setQuiz] = useState<any>(null);
     const { currentUser } = useSelector((state: any) => state.accountReducer);
     const isFacultyorAdmin = currentUser?.role === "FACULTY" || currentUser?.role ==="ADMIN";
+
+    useEffect(() => {
+        const fetchQuiz = async () => {
+            try {
+                const found = await quizzesClient.findQuizById(qid!);
+                setQuiz(found);
+            } catch (err) {
+                console.error("Failed to fetch quiz:", err);
+            }
+        };
+        fetchQuiz();
+    }, [qid]);
+
+    if (!quiz) {
+        return <div className="p-4"><h3>Loading quiz...</h3></div>;
+    }
+
     // Helper function to format ISO 8601 duration
     function formatTimeLimit(durationStr: any) {
         if (!durationStr) return "";
@@ -46,16 +57,6 @@ export default function QuizDetails() {
         };
         return new Date(dateString).toLocaleString('en-US', options);
     }
-    
-    // const dispatch = useDispatch()
-
-    // const fetchQuizzes = async () => {
-    //     const quizzes = await quizzesClient.findQuizzesForCourse(cid)
-    //     dispatch(setQuizzes(quizzes))
-    // }
-    // useEffect(() => {
-    //     fetchQuizzes();
-    // }, []);
 
     return (
         <div>
@@ -77,14 +78,7 @@ export default function QuizDetails() {
             </div>
 
             <div className="mb-4">
-                <FormLabel htmlFor="wd-quiz-description"></FormLabel>
-                <FormControl
-                    as="textarea"
-                    id="wd-quiz-description"
-                    rows={5}
-                    placeholder="Enter quiz description here..."
-                    // defaultValue={quiz.description}
-                />
+                <p className="fs-4">{quiz.description}</p>
             </div>
             
             <table className="table table-borderless w-auto mb-5">
