@@ -12,7 +12,8 @@ export default function QuizButtonMenu({
     
     show: boolean;
     title: string;
-    handleDelete: (id: string) => void;
+    // handleDelete: (id: string) => void;
+    handleDelete: () => void; // this is handled in parent 
     handlePublish: (quiz: any) => void;
     publishStatus: boolean;
     onCancel: () => void;

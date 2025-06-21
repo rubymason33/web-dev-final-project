@@ -24,7 +24,7 @@ export default function Quizzes() {
     const [modalQuizId, setModalQuizId] = useState<string | null>(null);
     const dispatch = useDispatch();
     const fetchQuizzes = async () => {
-        const quizzes = await quizzesClient.findQuizzesForCourse(cid)
+        const quizzes = await quizzesClient.findQuizzesForCourse(cid as string)
         //only show published for students
         if (!isFaculty) {
             const publishedquizzes = quizzes.filter((quiz: any) => quiz.published===true)
