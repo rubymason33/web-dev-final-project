@@ -13,7 +13,7 @@ export default function QuestionEditorForm({
     questionType,
     onCancel,
     onSaved,
-    onUpdate,
+    onSave,
     onDelete,
 }: {
     question?: any;
@@ -21,7 +21,7 @@ export default function QuestionEditorForm({
     questionType?: string;
     onCancel?: () => void;
     onSaved?: () => void;
-    onUpdate?: (updatedQuestion: any) => void;
+    onSave: (updatedQuestion: any) => Promise<void>;
     onDelete?: () => void;
 }) {
     const [form, setForm] = useState({
@@ -41,7 +41,6 @@ export default function QuestionEditorForm({
         possibleAnswers: question.possibleAnswers || [],
         caseSensitive: question.caseSensitive || false,
         _id: question._id || uuidv4(),
-        createdLocally: !question._id,
     });
 
     const updateField = (field: string, value: any) => {
@@ -49,14 +48,14 @@ export default function QuestionEditorForm({
         setForm(updated);
     };
 
-    const handleLocalSave = () => {
-        if (onUpdate) onUpdate(form); // push to local
-        if (onSaved) onSaved();       // exit edit mode
+    const handleSave = async () => {
+        await onSave(form);  // send to backend
+        if (onSaved) onSaved(); // exit editing
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (confirm("Are you sure you want to delete this question?")) {
-            if (onDelete) onDelete();
+            if (onDelete) await onDelete();
             if (onSaved) onSaved();
         }
     };
@@ -116,14 +115,14 @@ export default function QuestionEditorForm({
                 {mode === "edit" && (
                     <>
                         <Button variant="secondary" onClick={onCancel}>Cancel</Button>
-                        <Button variant="danger" onClick={handleLocalSave}>Save</Button>
+                        <Button variant="danger" onClick={handleSave}>Save</Button>
                         <Button variant="outline-danger" onClick={handleDelete}>Delete</Button>
                     </>
                 )}
                 {mode === "new" && (
                     <>
                         <Button variant="secondary" onClick={onCancel}>Cancel</Button>
-                        <Button variant="danger" onClick={handleLocalSave}>Save</Button>
+                        <Button variant="danger" onClick={handleSave}>Save</Button>
                     </>
                 )}
             </div>

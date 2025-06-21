@@ -52,15 +52,15 @@ export default function QuizEditor() {
     }
     const [formData, setFormData] = useState(defaultQuiz)
 
-    // pass the db data to the questions editor once
-    const [workingQuestions, setWorkingQuestions] = useState<any[]>([]);
+    // pass the db data to the questions editor at beginning
+    const [originalQuestions, setOriginalQuestions] = useState([]);
 
     useEffect(() => {
-        const fetchQuestions = async () => {
-            const fetched = await questionsClient.getQuestionsForQuiz(qid as string);
-            setWorkingQuestions(fetched);
-        };
-        if (qid) fetchQuestions();
+        async function fetchOriginalQuestions() {
+            const res = await questionsClient.getQuestionsForQuiz(qid as string);
+            setOriginalQuestions(res);
+        }
+        if (qid) fetchOriginalQuestions();
     }, [qid]);
 
 
@@ -116,18 +116,6 @@ export default function QuizEditor() {
                 newId = newQuiz._id
                 dispatch(addQuiz(newQuiz));
             }
-
-            // push quesitons to the db
-            console.log("Syncing questions to DB:", workingQuestions);
-            await Promise.all(
-                workingQuestions.map((q) =>
-                    q.createdLocally
-                    ? questionsClient.createQuestion(newId, q)
-                    : questionsClient.updateQuestion(q._id, q)
-                )
-            );
-
-
             navigate(`../Quizzes/${newId}`);
         } catch (error) {
             console.error("Error saving quiz:", error);
@@ -396,11 +384,11 @@ export default function QuizEditor() {
             </Tab>
             <Tab eventKey="questions" title="Questions" >
 
- 
-                {/* Questions content PASS IN THE DB HERE AND THEN */} 
+
+                {/* Questions content */} 
                 <QuestionEditor
-                    workingQuestions={workingQuestions}
-                    setWorkingQuestions={setWorkingQuestions}
+                    originalQuestions={originalQuestions}
+                    quizId={qid as string}
                 />
             </Tab>
         </Tabs>
