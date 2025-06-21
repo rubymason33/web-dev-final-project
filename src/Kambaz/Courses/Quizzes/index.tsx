@@ -11,15 +11,26 @@ import { useDispatch, useSelector } from "react-redux";
 import * as quizzesClient from "./client"
 import { FaTrash } from "react-icons/fa";
 import GreenCheckmark from "./GreenCheckmark";
-import {deleteQuiz} from "./reducer"
+import {deleteQuiz, setQuizzes} from "./reducer"
+import { useEffect } from "react";
 
 export default function Quizzes() {
     const { cid } = useParams();
-    const quizzes = db.quizzes.filter((q: any) => q.course === cid);
+    const quizzes = useSelector((state: any) =>
+        state.quizzesReducer.quizzes
+    );
     const { currentUser } = useSelector((state: any) => state.accountReducer);
     const isFaculty = currentUser?.role === "FACULTY";
 
     const dispatch = useDispatch();
+    const fetchQuizzes = async () => {
+        const quizzes = await quizzesClient.findQuizzesForCourse(cid)
+        dispatch(setQuizzes(quizzes))
+        console.log(quizzes)
+    }
+    useEffect(() => {
+        fetchQuizzes();
+    }, [cid]);
     const handleDelete = async (quizId: any) => {
         console.log(`deleteing quiz with id ${quizId}`)
         try {

@@ -1,6 +1,5 @@
 import { Form, Row, Col, Button, Tabs, Tab } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
-import * as db from "../../Database";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect } from "react";
 import * as quizzesClient from "./client";
@@ -14,17 +13,20 @@ import * as questionsClient from "./Questions/client"
 export default function QuizEditor() {
     const [key, setKey] = useState("details");
     const { cid, qid } = useParams()
-    const existingQuiz = db.quizzes.find(
+    const quizzes = useSelector((state: any) =>
+        state.quizzesReducer.quizzes
+    );
+    const existingQuiz = quizzes.find(
         (q: any) => q.course === cid && q._id === qid
     );
-
     const dispatch = useDispatch()
     const navigate = useNavigate();
     const { currentUser } = useSelector((state: any) => state.accountReducer);
     const isFaculty = currentUser?.role === "FACULTY";
     const defaultQuiz = {
         title: "",
-        instructions: "",
+        createdBy: currentUser._id,
+        description: "",
         course: cid,
         points: 0,
         questions: 0,
@@ -32,19 +34,21 @@ export default function QuizEditor() {
         quizType: "Graded Quiz",
         assignmentGroup: "Quizzes",
         shuffleAnswers: true,
-        timeLimit: "PT20M",
+        timeLimit: 20,
+        timeLimitOn: true,
         multipleAttempts: false,
         howManyAttempts: 1,
-        showCorrectAnswers: false,
+        showCorrectAnswers: "Immediately",
         accessCode: "",
-        oneQuestionAtATime: true,
+        oneQuestionAtTime: true,
         webcamRequired: false,
         lockQuestionsAfterAnswering: false,
         dueDate: "",
-        availableUntil: "",
+        availableDate: "",
         availableFor: "",
-        availableFrom: "",
-        published: false
+        untilDate: "",
+        published: false,
+        assignTo: ""
     }
     const [formData, setFormData] = useState(defaultQuiz)
 
@@ -72,14 +76,14 @@ export default function QuizEditor() {
         if (existingQuiz) {
             setFormData({
                 ...existingQuiz,
-                availableFrom: existingQuiz.availableFrom
-                    ? existingQuiz.availableFrom.slice(0, 16)
+                availableDate: existingQuiz.availableDate
+                    ? existingQuiz.availableDate.slice(0, 16)
                     : "",
                 dueDate: existingQuiz.dueDate
                     ? existingQuiz.dueDate.slice(0, 16)
                     : "",
-                availableUntil: existingQuiz.availableUntil
-                    ? existingQuiz.availableUntil.slice(0, 16)
+                untilDate: existingQuiz.untilDate
+                    ? existingQuiz.untilDate.slice(0, 16)
                     : ""
             });
         }
@@ -88,27 +92,30 @@ export default function QuizEditor() {
         const { name, type, checked, value } = e.target;
         setFormData((prev) => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value,
+            [name]: type === 'checkbox' ? checked : (type === 'number' ? Number(value) : value),
         }));
     }
     const handleSave = async (e: any) => {
         e.preventDefault();
-        // console.log("Working Questions to Save:", workingQuestions);
+        let newId = qid
         try {
             if (existingQuiz) {
+                console.log("existing")
                 const updatedQuiz = await quizzesClient.updateQuiz({
                     ...formData,
                     _id: existingQuiz._id
                 });
                 dispatch(updateQuiz(updatedQuiz));
             } else {
+                console.log("new")
                 const newQuiz = await quizzesClient.createQuizForCourse(
                     cid as string,
                     formData
                 );
+                newId = newQuiz._id
                 dispatch(addQuiz(newQuiz));
             }
-            navigate(`../Quizzes/${qid}`);
+            navigate(`../Quizzes/${newId}`);
         } catch (error) {
             console.error("Error saving quiz:", error);
         }
@@ -116,18 +123,18 @@ export default function QuizEditor() {
 
     const handleSaveandPublish = async (e: any) => {
         e.preventDefault();
-        setFormData({...formData, published: true});
+        const updatedFormData = { ...formData, published: true };
         try {
             if (existingQuiz) {
                 const updatedQuiz = await quizzesClient.updateQuiz({
-                    ...formData,
+                    ...updatedFormData,
                     _id: existingQuiz._id
                 });
                 dispatch(updateQuiz(updatedQuiz));
             } else {
                 const newQuiz = await quizzesClient.createQuizForCourse(
                     cid as string,
-                    formData
+                    updatedFormData
                 );
                 dispatch(addQuiz(newQuiz));
             }
@@ -160,14 +167,16 @@ export default function QuizEditor() {
             <Form>
                 <Form.Group className="mb-3" id="wd-name">
                     <Form.Label className="fw-bold">Quiz Title *</Form.Label>
-                    <Form.Control type="text" placeholder="Quiz Title" name="title" defaultValue={formData.title} />
+                    <Form.Control type="text" placeholder="Quiz Title" name="title" value={formData.title} onChange={handleChange} />
                 </Form.Group>
 
                 <Form.Group className="mb-5" id="wd-instructions">
                     <Form.Label className="fw-bold">Quiz Instructions</Form.Label>
                     <br></br>
+
                     <EditingMenu />
-                    <Form.Control as="textarea" rows={5} placeholder="Description" defaultValue={formData.instructions} />
+                    <Form.Control as="textarea" rows={5} placeholder="Description" defaultValue={formData.description} />
+
                 </Form.Group>
             
             <Row className="align-items-start mb-3">
@@ -179,9 +188,10 @@ export default function QuizEditor() {
                     <Form.Control
                     type="number"
                     id="wd-points"
-                    name="quizPoints"
+                    name="points"
                     placeholder="25"
                     value={formData.points}
+                    onChange={handleChange}
                     className="" />
                 </div>
                 </Col>
@@ -197,6 +207,7 @@ export default function QuizEditor() {
                     name="quizType"
                     value={formData.quizType}
                     className=""
+                    onChange={handleChange}
                     >
                     <option value="Practice Quiz">Practice Quiz</option>
                     <option value="Graded Quiz">Graded Quiz</option>
@@ -215,8 +226,9 @@ export default function QuizEditor() {
                     <Form.Select
                     id="wd-quiz-group"
                     name="quizGroup"
-                    value={formData.assignmentGroup}
+                    defaultValue={formData.assignmentGroup}
                     className=""
+                    onChange={handleChange}
                     >
                     <option value="Assignments">Assignments</option>
                     <option value="Quizzes">Quizzes</option>
@@ -230,11 +242,11 @@ export default function QuizEditor() {
                 </Col>
                 <Col>
                 <h6 className="fw-bold">Options</h6>
-                <Form.Check type="checkbox" label="Shuffle Answers" checked={formData.shuffleAnswers} onChange={handleChange}/>
+                <Form.Check type="checkbox" label="Shuffle Answers" name="shuffleAnswers" checked={formData.shuffleAnswers} onChange={handleChange}/>
                 <div className="d-flex gap-5">
-                    <Form.Check type="checkbox" label="Time Limit" checked={!(formData.timeLimit === null)} onChange={handleChange}/>
+                    <Form.Check type="checkbox" label="Time Limit" name="timeLimitOn" checked={formData.timeLimitOn} onChange={handleChange}/>
                     <Form.Group className="d-flex gap-2">
-                        <Form.Control type="text" value={formData.timeLimit.slice(2,4)} onChange={handleChange} style={{ width: "60px" }}/>
+                        <Form.Control type="number" value={formData.timeLimit} name="timeLimit" onChange={handleChange} style={{ width: "60px" }}/>
                         <Form.Label>Minutes</Form.Label>
                     </Form.Group>
 
@@ -243,12 +255,43 @@ export default function QuizEditor() {
                     <Form.Check type="checkbox" label="Allow Multiple Attempts"  name="multipleAttempts"    checked={formData.multipleAttempts} onChange={handleChange}/>
                     {(formData.multipleAttempts)  && 
                     (<div className="mt-2 d-flex gap-2">
-                    <Form.Control type="number" placeholder="1" name="howManyAttempts" defaultValue={formData.howManyAttempts} style={{ width: "60px" }}/>
+                    <Form.Control type="number" name="maxAttempts" value={formData.maxAttempts} style={{ width: "60px" }} onChange={handleChange}/>
                         <Form.Label className="">Allowed Attempts</Form.Label>                    </div>)}
                 </div>
 
                 <div className="wd-outline-box mb-4">
-                    <Form.Check type="checkbox" label="Show Correct Answers"  name="showCorrectAnswers"    checked={formData.showCorrectAnswers} onChange={handleChange}/>
+                    <Form.Check
+                        type="checkbox"
+                        label="Show Correct Answers"
+                        checked={formData.showCorrectAnswers !== ""}
+                        onChange={(e) =>
+                            setFormData({
+                                ...formData,
+                                showCorrectAnswers: e.target.checked ? "Immediately" : "",
+                            })
+                        }
+                    />
+
+                    {formData.showCorrectAnswers !== "" && (
+                        <div className="mt-2">
+                            {["Immediately", "After Due Date", "After Last Attempt", "Never", "On Specific Date"].map((option) => (
+                                <Form.Check
+                                    key={option}
+                                    type="radio"
+                                    label={option}
+                                    name="showCorrectAnswersOption"
+                                    value={option}
+                                    checked={formData.showCorrectAnswers === option}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            showCorrectAnswers: e.target.value,
+                                        })
+                                    }
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
                 <h6 className="fw-bold">Quiz Restrictions</h6>
                 <div className="wd-outline-box mb-4">
@@ -263,6 +306,7 @@ export default function QuizEditor() {
                             type="text"
                             value={formData.accessCode}
                             onChange={handleChange}
+                            name="accessCode"
                             placeholder="Enter passcode"
                             className="mt-2"
                         />
@@ -270,7 +314,7 @@ export default function QuizEditor() {
                 </div>
 
                 <div className="wd-outline-box mb-2">
-                    <Form.Check type="checkbox" label="One Question at a Time"  name="oneQuestionAtATime"    checked={formData.oneQuestionAtATime} onChange={handleChange}/>
+                    <Form.Check type="checkbox" label="One Question at a Time"  name="oneQuestionAtTime"    checked={formData.oneQuestionAtTime} onChange={handleChange}/>
                 </div>
 
                 <div className="wd-outline-box mb-2">
@@ -312,8 +356,8 @@ export default function QuizEditor() {
                         <Form.Label><b>Available From</b></Form.Label>
                         <Form.Control
                         type="datetime-local"
-                        name="availableFrom"
-                        value={formData.availableFrom}
+                        name="availableDate"
+                        value={formData.availableDate}
                         onChange={handleChange}
                         />
                     </Col>
@@ -321,8 +365,8 @@ export default function QuizEditor() {
                         <Form.Label><b>Until</b></Form.Label>
                         <Form.Control
                         type="datetime-local"
-                        name="availableUntil"
-                        value={formData.availableUntil}
+                        name="untilDate"
+                        value={formData.untilDate}
                         onChange={handleChange}
                         />
                     </Col>
@@ -330,10 +374,16 @@ export default function QuizEditor() {
                 </div>
                 </Col>
             </Row>
+
+
+            <hr />
+
             </Form>
         </div>
             </Tab>
             <Tab eventKey="questions" title="Questions" >
+
+ 
                 {/* Questions content PASS IN THE DB HERE AND THEN */} 
                 <QuestionEditor
                     workingQuestions={workingQuestions}
@@ -365,6 +415,7 @@ export default function QuizEditor() {
             Cancel
             </Button>
         </div>
+
         </>
 
 

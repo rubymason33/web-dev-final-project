@@ -1,12 +1,12 @@
 import { useParams, Link } from "react-router-dom";
-import * as db from "../../Database";
 import { Button, FormControl, FormLabel } from "react-bootstrap";
 import { TiPencil } from "react-icons/ti";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 
 export default function QuizDetails() {
     const { cid, qid } = useParams();
-    const quiz = db.quizzes.find(
+    const quizzes = useSelector((state: any) => state.quizzesReducer.quizzes);
+    const quiz = quizzes.find(
         (q: any) => q.course === cid && q._id === qid
     );
     // handle not finding a match
@@ -45,10 +45,16 @@ export default function QuizDetails() {
         };
         return new Date(dateString).toLocaleString('en-US', options);
     }
+    
+    const dispatch = useDispatch()
 
-    function processEdit() {
-        
-    }
+    // const fetchQuizzes = async () => {
+    //     const quizzes = await quizzesClient.findQuizzesForCourse(cid)
+    //     dispatch(setQuizzes(quizzes))
+    // }
+    // useEffect(() => {
+    //     fetchQuizzes();
+    // }, []);
 
     return (
         <div>
@@ -96,7 +102,7 @@ export default function QuizDetails() {
                     </tr>
                     <tr>
                         <td className="text-end"><strong>Shuffle Answers</strong></td>
-                        <td className="ps-2">{quiz.shuffleAnswers}</td>
+                        <td className="ps-2">{quiz.shuffleAnswers ? "Yes" : "No"}</td>
                     </tr>
                     <tr>
                         <td className="text-end"><strong>Time Limit</strong></td>
@@ -104,7 +110,7 @@ export default function QuizDetails() {
                     </tr>
                     <tr>
                         <td className="text-end"><strong>Multiple Attempts</strong></td>
-                        <td className="ps-2">{quiz.multipleAttempts}</td>
+                        <td className="ps-2">{quiz.multipleAttempts ? "Yes" : "No"}</td>
                     </tr>
                     <tr>
                         <td className="text-end"><strong>Show Correct Answers</strong></td>
@@ -112,15 +118,15 @@ export default function QuizDetails() {
                     </tr>
                     <tr>
                         <td className="text-end"><strong>One Question at a Time</strong></td>
-                        <td className="ps-2">{quiz.oneQuestionAtATime}</td>
+                        <td className="ps-2">{quiz.oneQuestionAtTime ? "Yes" : "No"}</td>
                     </tr>
                     <tr>
                         <td className="text-end"><strong>Webcam Required</strong></td>
-                        <td className="ps-2">{quiz.webcamRequired}</td>
+                        <td className="ps-2">{quiz.webcamRequired ? "Yes" : "No"}</td>
                     </tr>
                     <tr>
                         <td className="text-end"><strong>Lock Questions After Answering</strong></td>
-                        <td className="ps-2">{quiz.lockQuestionsAfterAnswering}</td>
+                        <td className="ps-2">{quiz.lockQuestionsAfterAnswering ? "Yes" : "No"}</td>
                     </tr>
                 </tbody>
             </table>
@@ -137,8 +143,8 @@ export default function QuizDetails() {
                     <tr className="border-bottom">
                     <td className="py-4">{formatDate(quiz.dueDate)}</td>
                     <td className="py-4">{quiz.availableFor}</td>
-                    <td className="py-4">{formatDate(quiz.availableFrom)}</td>
-                    <td className="py-4">{formatDate(quiz.availableUntil)}</td>
+                    <td className="py-4">{formatDate(quiz.availableDate)}</td>
+                    <td className="py-4">{formatDate(quiz.untilDate)}</td>
                     </tr>
                 </tbody>
             </table>
