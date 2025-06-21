@@ -376,7 +376,7 @@ export default function QuizEditor() {
             </Row>
 
 
-            <hr />
+
 
             </Form>
         </div>
