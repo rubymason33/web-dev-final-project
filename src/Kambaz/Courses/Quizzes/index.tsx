@@ -3,43 +3,58 @@ import { CiSearch } from "react-icons/ci";
 import { FaPlus } from "react-icons/fa6";
 import { IoEllipsisVertical } from "react-icons/io5";
 import { RiArrowDownSFill } from "react-icons/ri";
-import { Link, useParams } from "react-router";
+import { Link, useParams, useNavigate } from "react-router";
 import { HiOutlineRocketLaunch } from "react-icons/hi2";
-import * as db from "../../Database";
+import QuizButtonMenu from "./QuizButtonMenu";
 import "./styles.css"
 import { useDispatch, useSelector } from "react-redux";
 import * as quizzesClient from "./client"
-import { FaTrash } from "react-icons/fa";
 import GreenCheckmark from "./GreenCheckmark";
-import {deleteQuiz, setQuizzes} from "./reducer"
-import { useEffect } from "react";
+import {deleteQuiz, setQuizzes, updateQuiz} from "./reducer"
+import { useEffect, useState,  } from "react";
 
 export default function Quizzes() {
     const { cid } = useParams();
     const quizzes = useSelector((state: any) =>
         state.quizzesReducer.quizzes
     );
+    const navigate = useNavigate()
     const { currentUser } = useSelector((state: any) => state.accountReducer);
     const isFaculty = currentUser?.role === "FACULTY";
-
+    const [modalQuizId, setModalQuizId] = useState<string | null>(null);
     const dispatch = useDispatch();
     const fetchQuizzes = async () => {
         const quizzes = await quizzesClient.findQuizzesForCourse(cid)
-        dispatch(setQuizzes(quizzes))
+        //only show published for students
+        if (!isFaculty) {
+            const publishedquizzes = quizzes.filter((quiz: any) => quiz.published===true)
+            dispatch(setQuizzes(publishedquizzes))
+        }
+        else {
+            dispatch(setQuizzes(quizzes))
+        }
         console.log(quizzes)
     }
     useEffect(() => {
         fetchQuizzes();
     }, [cid]);
     const handleDelete = async (quizId: any) => {
-        console.log(`deleteing quiz with id ${quizId}`)
         try {
             await quizzesClient.deleteQuiz(quizId);
             dispatch(deleteQuiz(quizId));
         } catch (error) {
-            console.error("Failed to delete assignment:", error);
+            console.error("Failed to delete quiz:", error);
         }
     };
+    const handlePublish = async (quiz: any) => {
+        try {
+            const quizPublishChanged = { ...quiz, published: !quiz.published };
+            const updatedQuiz = await quizzesClient.updateQuiz(quizPublishChanged);
+            dispatch(updateQuiz(updatedQuiz));
+        } catch (error) {
+            console.error("Failed to update quiz publish status:", error);
+        }
+    }
 
     return (
         <div>
@@ -130,7 +145,7 @@ export default function Quizzes() {
                                                 <span className="text-muted fw-bold">{quiz.status}</span>
                                                 <span className="text-muted"> </span>
                                                 <span className="text-muted">
-                                                    {new Date(quiz.availableFrom).toLocaleString("en-US", {
+                                                    {new Date(quiz.availableDate).toLocaleString("en-US", {
                                                     month: "long",
                                                     day: "numeric",
                                                     hour: "numeric",
@@ -158,9 +173,26 @@ export default function Quizzes() {
                                     </div>
                                     {/* lesson control */}
                                     <div className="d-flex align-items-center ms-3 gap-2">
-                                    <FaTrash onClick={() => handleDelete(quiz._id)}/>
-                                    <GreenCheckmark />
-                                    <IoEllipsisVertical className="fs-4"/>
+                                    {/* <FaTrash onClick={() => handleDelete(quiz._id)}/> */}
+                                    {quiz.published && <GreenCheckmark />}
+                                    <IoEllipsisVertical className="fs-4" onClick={() => setModalQuizId(quiz._id)}/>
+                                    {modalQuizId === quiz._id && isFaculty && (
+                                    <QuizButtonMenu
+                                        title={quiz.title}
+                                        show={true}
+                                        onCancel={() => setModalQuizId(null)}
+                                        handleDelete={() => {
+                                        handleDelete(quiz._id);
+                                        setModalQuizId(null);
+                                        }}
+                                        publishStatus={quiz.published}
+                                        handlePublish={() => {
+                                        handlePublish(quiz);
+                                        setModalQuizId(null);
+                                        }}
+                                        goToEdit={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/edit`)}
+                                    />
+                                    )}
                                     </div>
 
 
