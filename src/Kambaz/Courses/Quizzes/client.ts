@@ -22,3 +22,9 @@ export const deleteQuiz = async (quizId: string) => {
     const response = await axiosWithCredentials.delete(`${QUIZZES_API}/${quizId}`);
     return response.data;
 };
+
+export const findQuizById = async (quizId: string) => {
+    const response = await axiosWithCredentials.get(`${QUIZZES_API}/${quizId}`);
+    return response.data;
+}
+
