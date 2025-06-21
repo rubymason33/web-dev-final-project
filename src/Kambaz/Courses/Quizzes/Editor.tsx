@@ -97,7 +97,7 @@ export default function QuizEditor() {
     }
     const handleSave = async (e: any) => {
         e.preventDefault();
-        let newId = qid
+        let newId: string;
         try {
             if (existingQuiz) {
                 console.log("existing")
@@ -106,6 +106,7 @@ export default function QuizEditor() {
                     _id: existingQuiz._id
                 });
                 dispatch(updateQuiz(updatedQuiz));
+                newId = existingQuiz._id;
             } else {
                 console.log("new")
                 const newQuiz = await quizzesClient.createQuizForCourse(
@@ -115,6 +116,18 @@ export default function QuizEditor() {
                 newId = newQuiz._id
                 dispatch(addQuiz(newQuiz));
             }
+
+            // push quesitons to the db
+            console.log("Syncing questions to DB:", workingQuestions);
+            await Promise.all(
+                workingQuestions.map((q) =>
+                    q.createdLocally
+                    ? questionsClient.createQuestion(newId, q)
+                    : questionsClient.updateQuestion(q._id, q)
+                )
+            );
+
+
             navigate(`../Quizzes/${newId}`);
         } catch (error) {
             console.error("Error saving quiz:", error);

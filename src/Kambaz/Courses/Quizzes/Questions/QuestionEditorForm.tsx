@@ -41,6 +41,7 @@ export default function QuestionEditorForm({
         possibleAnswers: question.possibleAnswers || [],
         caseSensitive: question.caseSensitive || false,
         _id: question._id || uuidv4(),
+        createdLocally: !question._id,
     });
 
     const updateField = (field: string, value: any) => {
