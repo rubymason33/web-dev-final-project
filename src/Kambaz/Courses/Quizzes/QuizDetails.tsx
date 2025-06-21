@@ -1,7 +1,8 @@
 import { useParams, Link } from "react-router-dom";
 import { Button, FormControl, FormLabel } from "react-bootstrap";
 import { TiPencil } from "react-icons/ti";
-import { useSelector, useDispatch } from "react-redux";
+// import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 
 export default function QuizDetails() {
     const { cid, qid } = useParams();
@@ -46,7 +47,7 @@ export default function QuizDetails() {
         return new Date(dateString).toLocaleString('en-US', options);
     }
     
-    const dispatch = useDispatch()
+    // const dispatch = useDispatch()
 
     // const fetchQuizzes = async () => {
     //     const quizzes = await quizzesClient.findQuizzesForCourse(cid)
@@ -60,15 +61,15 @@ export default function QuizDetails() {
         <div>
             <div id="wd-quiz-details-header" className="mb-3">
                 {isFacultyorAdmin && (<div className="d-flex justify-content-end mb-2">
-                    <Button  as={Link} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/edit`} className="border-0 bg-secondary text-dark btn-lg me-2">
+                    <Button  as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/edit`} className="border-0 bg-secondary text-dark btn-lg me-2">
                         <TiPencil className="fs-4"/> Edit
                     </Button>
-                    <Button as={Link} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take/preview`}  className="border-0 bg-secondary text-dark btn-lg">
+                    <Button as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take/preview`}  className="border-0 bg-secondary text-dark btn-lg">
                         Preview
                     </Button>
                 </div>)}
                 {!isFacultyorAdmin && (<div className="d-flex justify-content-end mb-2">
-                <Button as={Link} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take`} className="border-0 bg-danger btn-lg me-2">
+                <Button as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take`} className="border-0 bg-danger btn-lg me-2">
                         Start
                     </Button>
                 </div>)}
@@ -151,13 +152,13 @@ export default function QuizDetails() {
             <div className="d-flex justify-content-center">
                 {isFacultyorAdmin ? 
                 <Button className="bg-danger border-0 btn-lg"
-                as={Link}
+                as={Link as any}
                 to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take/preview`}>
                 Preview
                 </Button>
                 :
                 <Button className="bg-danger border-0 btn-lg"
-                as={Link}
+                as={Link as any}
                 to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take`}>
                 Start
                 </Button>}
