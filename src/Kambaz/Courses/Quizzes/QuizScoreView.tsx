@@ -1,4 +1,3 @@
-// src/Kambaz/Courses/Quizzes/QuizScoreView.tsx
 import { useParams, useNavigate } from "react-router-dom";
 import { Button, Alert } from "react-bootstrap";
 import { useSelector } from "react-redux";
