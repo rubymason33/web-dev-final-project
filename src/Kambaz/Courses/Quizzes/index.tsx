@@ -92,7 +92,7 @@ export default function Quizzes() {
                         <ListGroup className="wd-quiz rounded-0">
                             {quizzes
                             .slice()
-                            .sort((a,b) => new Date(a.availableDate) - new Date(b.availableDate))
+                            .sort((a: any,b: any) => (new Date(a.availableDate) as any) - (new Date(b.availableDate) as any))
                             .map((quiz: any) => (
                                 <ListGroup.Item key={quiz._id} className="d-flex align-items-center px-3 py-3">
                                     {/* rocket icon */}
