@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import * as quizzesClient from "./client";
 import * as attemptsClient from "./Attempts/client";
 
-
 export default function QuizDetails() {
     const { cid, qid } = useParams();
     const navigate = useNavigate();
