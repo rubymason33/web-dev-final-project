@@ -26,12 +26,20 @@ export default function QuizEditor() {
     const [key, setKey] = useState("details");
     const { cid, qid } = useParams()
     const sessionKey = `original-${qid}`; // use for cancel logic
-    const quizzes = useSelector((state: any) =>
-        state.quizzesReducer.quizzes
-    );
-    const existingQuiz = quizzes.find(
-        (q: any) => q.course === cid && q._id === qid
-    );
+    const [existingQuiz, setQuiz] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchQuiz = async () => {
+            try {
+                const found = await quizzesClient.findQuizById(qid!);
+                setQuiz(found.data);
+            } catch (err) {
+                console.error("Failed to fetch quiz:", err);
+            }
+        };
+        fetchQuiz();
+    }, [qid]);
+    
     const dispatch = useDispatch()
     const navigate = useNavigate();
     const { currentUser } = useSelector((state: any) => state.accountReducer);
@@ -333,6 +341,7 @@ export default function QuizEditor() {
                     <option value="Assignments">Assignments</option>
                     <option value="Quizzes">Quizzes</option>
                     <option value="Exams">Exams</option>
+                    <option value="Project">Exams</option>
                     </Form.Select>
                 </div>
                 </Col>

@@ -90,7 +90,10 @@ export default function Quizzes() {
                         </div>
 
                         <ListGroup className="wd-quiz rounded-0">
-                            {quizzes.map((quiz: any) => (
+                            {quizzes
+                            .slice()
+                            .sort((a,b) => new Date(a.availableDate) - new Date(b.availableDate))
+                            .map((quiz: any) => (
                                 <ListGroup.Item key={quiz._id} className="d-flex align-items-center px-3 py-3">
                                     {/* rocket icon */}
                                     <div className="me-3 d-flex align-items-center" style={{ width: "30px" }}>

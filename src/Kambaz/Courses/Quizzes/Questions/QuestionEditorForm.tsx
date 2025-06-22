@@ -38,7 +38,7 @@ export default function QuestionEditorForm({
                   ]
                 : [],
         correctAnswer: question.correctAnswer ?? true,
-        possibleAnswers: question.possibleAnswers || [],
+        possibleAnswers: question.possibleAnswers || [""],
         caseSensitive: question.caseSensitive || false,
         _id: question._id || uuidv4(),
     });
