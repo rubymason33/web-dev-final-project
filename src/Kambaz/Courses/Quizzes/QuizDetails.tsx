@@ -1,15 +1,17 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button, Modal } from "react-bootstrap";
 import { TiPencil } from "react-icons/ti";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
 import * as quizzesClient from "./client";
 import * as attemptsClient from "./Attempts/client";
+import {updateQuiz} from "./reducer"
 
 export default function QuizDetails() {
     const { cid, qid } = useParams();
     const navigate = useNavigate();
-    
+    const dispatch = useDispatch();
+
     const [quiz, setQuiz] = useState<any>(null);
     
     const { currentUser } = useSelector((state: any) => state.accountReducer);
@@ -30,7 +32,7 @@ export default function QuizDetails() {
             }
         };
         fetchQuiz();
-    }, [qid]);
+    }, [qid, quiz]);
 
     useEffect(() => {
         const checkLatestAttempt = async () => {
@@ -106,6 +108,16 @@ export default function QuizDetails() {
         return <div className="p-4"><h3>Loading quiz...</h3></div>;
     }
 
+    const handlePublish = async () => {
+        try {
+            const quizPublishChanged = { ...quiz, published: !quiz.published };
+            const updatedQuiz = await quizzesClient.updateQuiz(quizPublishChanged);
+            dispatch(updateQuiz(updatedQuiz));
+        } catch (error) {
+            console.error("Failed to update quiz publish status:", error);
+        }
+    }
+
     return (
         <div>
             <div id="wd-quiz-details-header" className="mb-3">
@@ -113,8 +125,12 @@ export default function QuizDetails() {
                     <Button  as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/edit`} className="border-0 bg-secondary text-dark btn-lg me-2">
                         <TiPencil className="fs-4"/> Edit
                     </Button>
-                    <Button as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/preview`}  className="border-0 bg-secondary text-dark btn-lg">
+                    <Button as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/preview`}  className="border-0 bg-secondary text-dark btn-lg me-2">
                         Preview
+                    </Button>
+                    <Button className="border-0 bg-success btn-lg" onClick={handlePublish}>
+                        {quiz.published && "Un-publish"}
+                        {!quiz.published && "Publish"}
                     </Button>
                 </div>)}
                 
