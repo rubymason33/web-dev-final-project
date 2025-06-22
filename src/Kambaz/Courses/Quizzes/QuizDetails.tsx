@@ -20,6 +20,7 @@ export default function QuizDetails() {
     
     const [latestAttempt, setLatestAttempt] = useState<any>(null);
     const [showErrorModal, setShowErrorModal] = useState(false);
+    // @ts-ignore
     const [errorMessage, setErrorMessage] = useState("");
 
     useEffect(() => {
