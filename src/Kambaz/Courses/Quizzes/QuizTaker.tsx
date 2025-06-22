@@ -102,11 +102,10 @@ export default function QuizTaker() {
                 if (quizData && quizData.accessCode && !isPreview) {
                     setAccessCodeRequired(true);
                 } else if (!isPreview && isStudent && quizData) {
-                    // Access code not required, proceed normally
+                    // access code not required, proceed normally
                 }
             } catch (error) {
                 console.error("Error fetching quiz data:", error);
-                // If there's an error fetching data, redirect back to quizzes
                 navigate(`/Kambaz/Courses/${cid}/Quizzes`);
             }
         };
@@ -133,7 +132,6 @@ export default function QuizTaker() {
                     setAttemptId(attempt._id);
                 } catch (error) {
                     console.error("Error starting quiz attempt:", error);
-                    // If we can't start the attempt, redirect back
                     navigate(`/Kambaz/Courses/${cid}/Quizzes`);
                 }
             }
@@ -152,7 +150,6 @@ export default function QuizTaker() {
                     setAttemptId(attempt._id);
                 } catch (error) {
                     console.error("Error starting quiz attempt:", error);
-                    // If we can't start the attempt, redirect back
                     navigate(`/Kambaz/Courses/${cid}/Quizzes`);
                 }
             }
