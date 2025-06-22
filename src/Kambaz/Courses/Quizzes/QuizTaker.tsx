@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { Button, Form, Alert, Modal } from "react-bootstrap";
+import { Button, Form, Alert } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { useState, useEffect } from "react";
 import * as quizzesClient from "./client";
