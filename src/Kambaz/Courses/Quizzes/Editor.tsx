@@ -86,6 +86,7 @@ export default function QuizEditor() {
             setOriginalQuestions(res);
             sessionStorage.setItem(`original-${qid}`, JSON.stringify(res));
             }
+            await updatePoints();
         };
 
         if (qid) fetchQuestions();
@@ -151,6 +152,7 @@ export default function QuizEditor() {
                 dispatch(addQuiz(newQuiz));
             }
             sessionStorage.removeItem(sessionKey); // clear the "original" questions state
+            await updatePoints();
             navigate(`../Quizzes/${newId}`);
         } catch (error) {
             console.error("Error saving quiz:", error);
@@ -179,6 +181,7 @@ export default function QuizEditor() {
                 dispatch(addQuiz(newQuiz));
             }
             sessionStorage.removeItem(sessionKey); // clear the "original" questions state
+            await updatePoints();
             navigate(`../Quizzes`);
         } catch (error) {
             console.error("Error saving quiz:", error);
@@ -243,6 +246,16 @@ export default function QuizEditor() {
         }
     };
 
+    const updatePoints = async () => {
+        try {
+            const questions: Question[] = await questionsClient.getQuestionsForQuiz(qid as string);
+            // sum over the points property
+            const totalPoints = questions.reduce((sum: number, q: Question) => sum + (q.points || 0), 0);
+            setFormData((prev) => ({ ...prev, points: totalPoints }));
+        } catch (err) {
+            console.error("Failed to calculate quiz points:", err);
+        }
+    };
 
     return (
         <>

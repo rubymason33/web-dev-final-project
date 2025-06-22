@@ -76,7 +76,9 @@ export default function QuizDetails() {
     const validateQuizAccess = () => {
         const now = new Date();
         
+        // For students
         if (isStudent) {
+            // Check availability dates
             if (quiz.availableDate && new Date(quiz.availableDate) > now) {
                 setErrorMessage("This quiz is not yet available.");
                 return false;
@@ -87,11 +89,13 @@ export default function QuizDetails() {
                 return false;
             }
             
+            // Check max attempts
             if (quiz.multipleAttempts === false && attemptCount >= 1) {
                 setErrorMessage("You have already completed this quiz and multiple attempts are not allowed.");
                 return false;
             }
             
+            // Check if quiz has a specific max attempts limit
             if (quiz.allowedAttempts && quiz.allowedAttempts > 0 && attemptCount >= quiz.allowedAttempts) {
                 setErrorMessage(`You have reached the maximum number of attempts (${quiz.allowedAttempts}) for this quiz.`);
                 return false;
@@ -103,12 +107,14 @@ export default function QuizDetails() {
             }
         }
         
+        // For faculty preview
         if (isFacultyorAdmin) {
             if (!questions || questions.length === 0) {
                 setErrorMessage("Cannot preview quiz: No questions have been added to this quiz yet.");
                 return false;
             }
         }
+        
         return true;
     };
 
@@ -307,34 +313,47 @@ export default function QuizDetails() {
                     </tr>
                 </tbody>
             </table>
-            <div className="d-flex justify-content-center">
-                {isFacultyorAdmin ? (
+            <div className="d-flex justify-content-between align-items-center w-100">
+                <div>
                     <Button 
-                        className="bg-danger border-0 btn-lg"
-                        onClick={handlePreview}
+                        variant="secondary" 
+                        className="btn-lg"
+                        onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/`)}
                     >
-                        Preview
+                        Back
                     </Button>
-                ) : (
-                    <div className="d-flex gap-2">
+                </div>
+
+                <div className="d-flex justify-content-center flex-grow-1">
+                    {isFacultyorAdmin ? (
                         <Button 
                             className="bg-danger border-0 btn-lg"
-                            onClick={handleStartQuiz}
+                            onClick={handlePreview}
                         >
-                            Start
+                            Preview
                         </Button>
-                        
-                        {latestAttempt && (
+                    ) : (
+                        <div className="d-flex gap-2">
                             <Button 
-                                variant="secondary"
-                                className="btn-lg"
-                                onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/score`)}
+                                className="bg-danger border-0 btn-lg"
+                                onClick={handleStartQuiz}
                             >
-                                View Score
+                                Start
                             </Button>
-                        )}
-                    </div>
-                )}
+                            
+                            {latestAttempt && (
+                                <Button 
+                                    variant="secondary"
+                                    className="btn-lg"
+                                    onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/score`)}
+                                >
+                                    View Score
+                                </Button>
+                            )}
+                        </div>
+                    )}
+                </div>
+                <div style={{ width: "100px" }} />
             </div>
 
             <ErrorModal />
