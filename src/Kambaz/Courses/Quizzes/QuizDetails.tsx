@@ -1,18 +1,19 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button, Modal } from "react-bootstrap";
 import { TiPencil } from "react-icons/ti";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { useState, useEffect } from "react";
 import * as quizzesClient from "./client";
 import * as attemptsClient from "./Attempts/client";
-import {updateQuiz} from "./reducer"
+import * as questionsClient from "./Questions/client";
 
 export default function QuizDetails() {
     const { cid, qid } = useParams();
     const navigate = useNavigate();
-    const dispatch = useDispatch();
-
+    
     const [quiz, setQuiz] = useState<any>(null);
+    const [questions, setQuestions] = useState<any[]>([]);
+    const [attemptCount, setAttemptCount] = useState(0);
     
     const { currentUser } = useSelector((state: any) => state.accountReducer);
     const isFacultyorAdmin = currentUser?.role === "FACULTY" || currentUser?.role === "ADMIN";
@@ -20,7 +21,6 @@ export default function QuizDetails() {
     
     const [latestAttempt, setLatestAttempt] = useState<any>(null);
     const [showErrorModal, setShowErrorModal] = useState(false);
-    // @ts-ignore
     const [errorMessage, setErrorMessage] = useState("");
 
     useEffect(() => {
@@ -33,7 +33,22 @@ export default function QuizDetails() {
             }
         };
         fetchQuiz();
-    }, [qid, quiz]);
+    }, [qid]);
+
+    useEffect(() => {
+        const fetchQuestions = async () => {
+            if (isFacultyorAdmin && qid) {
+                try {
+                    const questionsData = await questionsClient.getQuestionsForQuiz(qid);
+                    setQuestions(questionsData);
+                } catch (error) {
+                    console.error("Failed to fetch questions:", error);
+                    setQuestions([]);
+                }
+            }
+        };
+        fetchQuestions();
+    }, [qid, isFacultyorAdmin]);
 
     useEffect(() => {
         const checkLatestAttempt = async () => {
@@ -43,9 +58,14 @@ export default function QuizDetails() {
                     if (attempt && attempt.completedAt) {
                         setLatestAttempt(attempt);
                     }
+                    
+                    const attempts = await attemptsClient.getAttemptsForQuiz(quiz._id);
+                    setAttemptCount(attempts.length);
+                    console.log("Loaded attempts:", attempts.length);
                 } catch (error) {
                     console.log("No previous attempt found");
-                    console.log(error)
+                    console.log(error);
+                    setAttemptCount(0);
                 }
             }
         };
@@ -53,8 +73,69 @@ export default function QuizDetails() {
         checkLatestAttempt();
     }, [quiz?._id, isStudent]);
 
+    const validateQuizAccess = () => {
+        const now = new Date();
+        
+        if (isStudent) {
+            if (quiz.availableDate && new Date(quiz.availableDate) > now) {
+                setErrorMessage("This quiz is not yet available.");
+                return false;
+            }
+            
+            if (quiz.untilDate && new Date(quiz.untilDate) < now) {
+                setErrorMessage("The availability period for this quiz has ended.");
+                return false;
+            }
+            
+            if (quiz.multipleAttempts === false && attemptCount >= 1) {
+                setErrorMessage("You have already completed this quiz and multiple attempts are not allowed.");
+                return false;
+            }
+            
+            if (quiz.allowedAttempts && quiz.allowedAttempts > 0 && attemptCount >= quiz.allowedAttempts) {
+                setErrorMessage(`You have reached the maximum number of attempts (${quiz.allowedAttempts}) for this quiz.`);
+                return false;
+            }
+            
+            if (latestAttempt && latestAttempt.completedAt && quiz.multipleAttempts === false) {
+                setErrorMessage("You have already completed this quiz and multiple attempts are not allowed.");
+                return false;
+            }
+        }
+        
+        if (isFacultyorAdmin) {
+            if (!questions || questions.length === 0) {
+                setErrorMessage("Cannot preview quiz: No questions have been added to this quiz yet.");
+                return false;
+            }
+        }
+        return true;
+    };
+
     const handleStartQuiz = async () => {
+        console.log("Starting quiz validation...");
+        console.log("Quiz data:", {
+            multipleAttempts: quiz.multipleAttempts,
+            allowedAttempts: quiz.allowedAttempts,
+            attemptCount: attemptCount,
+            latestAttempt: latestAttempt
+        });
+        
+        if (!validateQuizAccess()) {
+            console.log("Validation failed, showing error modal");
+            setShowErrorModal(true);
+            return;
+        }
+        console.log("Validation passed, navigating to quiz");
         navigate(`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/take`);
+    };
+
+    const handlePreview = () => {
+        if (!validateQuizAccess()) {
+            setShowErrorModal(true);
+            return;
+        }
+        navigate(`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/preview`);
     };
 
     function formatTimeLimit(durationStr: any) {
@@ -66,7 +147,7 @@ export default function QuizDetails() {
             const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : 0;
             const minutes = minutesMatch ? parseInt(minutesMatch[1], 10) : 0;
 
-            let result = [];
+            const result = [];
             if (hours > 0) result.push(`${hours} Hour${hours > 1 ? "s" : ""}`);
             if (minutes > 0) result.push(`${minutes} Minute${minutes > 1 ? "s" : ""}`);
 
@@ -109,16 +190,6 @@ export default function QuizDetails() {
         return <div className="p-4"><h3>Loading quiz...</h3></div>;
     }
 
-    const handlePublish = async () => {
-        try {
-            const quizPublishChanged = { ...quiz, published: !quiz.published };
-            const updatedQuiz = await quizzesClient.updateQuiz(quizPublishChanged);
-            dispatch(updateQuiz(updatedQuiz));
-        } catch (error) {
-            console.error("Failed to update quiz publish status:", error);
-        }
-    }
-
     return (
         <div>
             <div id="wd-quiz-details-header" className="mb-3">
@@ -126,12 +197,11 @@ export default function QuizDetails() {
                     <Button  as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/edit`} className="border-0 bg-secondary text-dark btn-lg me-2">
                         <TiPencil className="fs-4"/> Edit
                     </Button>
-                    <Button as={Link as any} to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/preview`}  className="border-0 bg-secondary text-dark btn-lg me-2">
+                    <Button 
+                        className="border-0 bg-secondary text-dark btn-lg"
+                        onClick={handlePreview}
+                    >
                         Preview
-                    </Button>
-                    <Button className="border-0 bg-success btn-lg" onClick={handlePublish}>
-                        {quiz.published && "Un-publish"}
-                        {!quiz.published && "Publish"}
                     </Button>
                 </div>)}
                 
@@ -239,10 +309,11 @@ export default function QuizDetails() {
             </table>
             <div className="d-flex justify-content-center">
                 {isFacultyorAdmin ? (
-                    <Button className="bg-danger border-0 btn-lg"
-                    as={Link as any}
-                    to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/preview`}>
-                    Preview
+                    <Button 
+                        className="bg-danger border-0 btn-lg"
+                        onClick={handlePreview}
+                    >
+                        Preview
                     </Button>
                 ) : (
                     <div className="d-flex gap-2">

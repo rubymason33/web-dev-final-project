@@ -43,8 +43,6 @@ export default function QuizTaker() {
     const [accessCodeRequired, setAccessCodeRequired] = useState(false);
     const [accessCodeVerified, setAccessCodeVerified] = useState(false);
     const [attemptId, setAttemptId] = useState<string | null>(null);
-    const [showErrorModal, setShowErrorModal] = useState(false);
-    const [errorMessage, setErrorMessage] = useState("");
 
     const currentQuestion = questions[currentQuestionIndex];
     const isLastQuestion = currentQuestionIndex === questions.length - 1;
@@ -64,36 +62,6 @@ export default function QuizTaker() {
 
     const goToQuestion = (index: number) => {
         setCurrentQuestionIndex(index);
-    };
-
-    const handleQuizStartError = (error: any) => {
-        let message = "Could not start quiz. Please try again.";
-        
-        if (error.response) {
-            switch (error.response.status) {
-                case 403:
-                    if (error.response.data.message.includes("not published")) {
-                        message = "This quiz is not yet published.";
-                    } else if (error.response.data.message.includes("Maximum attempts")) {
-                        message = "You have reached the maximum number of attempts for this quiz.";
-                    } else if (error.response.data.message.includes("availability")) {
-                        message = "This quiz is not available at this time.";
-                    } else if (error.response.data.message.includes("due")) {
-                        message = "The due date for this quiz has passed.";
-                    } else {
-                        message = error.response.data.message || message;
-                    }
-                    break;
-                case 404:
-                    message = "Quiz not found.";
-                    break;
-                default:
-                    message = error.response.data.message || message;
-            }
-        }
-        
-        setErrorMessage(message);
-        setShowErrorModal(true);
     };
 
     useEffect(() => {
@@ -134,10 +102,12 @@ export default function QuizTaker() {
                 if (quizData && quizData.accessCode && !isPreview) {
                     setAccessCodeRequired(true);
                 } else if (!isPreview && isStudent && quizData) {
-                    // don't automatically start attempt
+                    // Access code not required, proceed normally
                 }
             } catch (error) {
                 console.error("Error fetching quiz data:", error);
+                // If there's an error fetching data, redirect back to quizzes
+                navigate(`/Kambaz/Courses/${cid}/Quizzes`);
             }
         };
 
@@ -163,7 +133,8 @@ export default function QuizTaker() {
                     setAttemptId(attempt._id);
                 } catch (error) {
                     console.error("Error starting quiz attempt:", error);
-                    handleQuizStartError(error);
+                    // If we can't start the attempt, redirect back
+                    navigate(`/Kambaz/Courses/${cid}/Quizzes`);
                 }
             }
         };
@@ -171,7 +142,7 @@ export default function QuizTaker() {
         if (quiz && !accessCodeRequired) {
             startInitialAttempt();
         }
-    }, [quiz, isPreview, isStudent, qid, accessCodeRequired, attemptId]);
+    }, [quiz, isPreview, isStudent, qid, accessCodeRequired, attemptId, navigate, cid]);
 
     useEffect(() => {
         const startAttempt = async () => {
@@ -181,7 +152,8 @@ export default function QuizTaker() {
                     setAttemptId(attempt._id);
                 } catch (error) {
                     console.error("Error starting quiz attempt:", error);
-                    handleQuizStartError(error);
+                    // If we can't start the attempt, redirect back
+                    navigate(`/Kambaz/Courses/${cid}/Quizzes`);
                 }
             }
         };
@@ -348,32 +320,6 @@ export default function QuizTaker() {
 
     if (!quiz || !questions.length) {
         return <div className="p-4">Loading quiz...</div>;
-    }
-
-    const ErrorModal = () => (
-        <Modal show={showErrorModal} onHide={() => setShowErrorModal(false)} centered>
-            <Modal.Header closeButton>
-                <Modal.Title>Cannot Start Quiz</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <p>{errorMessage}</p>
-            </Modal.Body>
-            <Modal.Footer>
-                <Button 
-                    variant="primary" 
-                    onClick={() => {
-                        setShowErrorModal(false);
-                        navigate(`/Kambaz/Courses/${cid}/Quizzes`);
-                    }}
-                >
-                    Back to Quizzes
-                </Button>
-            </Modal.Footer>
-        </Modal>
-    );
-
-    if (showErrorModal) {
-        return <ErrorModal />;
     }
 
     if (accessCodeRequired && !accessCodeVerified) {
