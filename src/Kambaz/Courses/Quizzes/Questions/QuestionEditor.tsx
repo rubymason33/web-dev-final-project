@@ -54,9 +54,17 @@ export default function QuestionEditor({
         fetchCurrentDB();
     }, [quizId]);
 
+    const getCurrentTotalPoints = () => {
+        return displayQuestions.reduce((sum, q) => sum + (q.points || 0), 0);
+    };
 
     return (
         <div>
+            <div className="d-flex justify-content-end mb-3">
+                <div className="p-2 bg-light border rounded fs-5">
+                    <b>Total Points:</b> {getCurrentTotalPoints()}
+                </div>
+            </div>
             {!adding && (
                 <div className="d-flex justify-content-center my-3">
                 <Button
