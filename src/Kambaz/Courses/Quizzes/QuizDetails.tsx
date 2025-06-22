@@ -237,34 +237,55 @@ export default function QuizDetails() {
                     </tr>
                 </tbody>
             </table>
-            <div className="d-flex justify-content-center">
-                {isFacultyorAdmin ? (
-                    <Button className="bg-danger border-0 btn-lg"
-                    as={Link as any}
-                    to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/preview`}>
-                    Preview
+            <div className="d-flex justify-content-between align-items-center w-100">
+                {/* back button */}
+                <div>
+                    <Button 
+                        variant="secondary" 
+                        className="btn-lg"
+                        onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/`)}
+                    >
+                        Back
                     </Button>
-                ) : (
-                    <div className="d-flex gap-2">
+                </div>
+
+                {/* preview button */}
+                <div className="d-flex justify-content-center flex-grow-1">
+                    {isFacultyorAdmin ? (
                         <Button 
                             className="bg-danger border-0 btn-lg"
-                            onClick={handleStartQuiz}
+                            as={Link as any}
+                            to={`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/preview`}
                         >
-                            Start
+                            Preview
                         </Button>
-                        
-                        {latestAttempt && (
+                    ) : (
+                        <div className="d-flex gap-2">
                             <Button 
-                                variant="secondary"
-                                className="btn-lg"
-                                onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/score`)}
+                                className="bg-danger border-0 btn-lg"
+                                onClick={handleStartQuiz}
                             >
-                                View Score
+                                Start
                             </Button>
-                        )}
-                    </div>
-                )}
+                            
+                            {latestAttempt && (
+                                <Button 
+                                    variant="secondary"
+                                    className="btn-lg"
+                                    onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/${quiz._id}/score`)}
+                                >
+                                    View Score
+                                </Button>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* space on right */}
+                <div style={{ width: "100px" }} />
             </div>
+
+            
 
             <ErrorModal />
         </div>
